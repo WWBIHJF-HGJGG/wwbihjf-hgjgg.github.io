@@ -797,6 +797,29 @@
         box-shadow: 0 10px 26px rgba(35, 49, 44, 0.30);
       }
       .follow-pill:active { transform: translateY(1px); }
+      /* "Resume" key: hearing a word's pronunciation pauses the
+         reader's main audio in place (see the word card), so this
+         pill waits in the same right-hand column, one slot above the
+         follow pill, whenever a main audio sits paused by a word
+         lookup; one tap picks the narration or recitation back up
+         exactly where it stopped. It exists only in that state —
+         hidden the moment playback resumes any other way, the audio
+         ends, or the reader closes. */
+      .resume-fab {
+        position: absolute; right: 16px; z-index: 45;
+        bottom: calc(max(16px, env(safe-area-inset-bottom)) + 116px);
+        display: flex; align-items: center; gap: 7px;
+        appearance: none; cursor: pointer;
+        font: inherit; font-size: 13.5px; font-weight: 600;
+        color: var(--paper); background: var(--dark);
+        border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 999px;
+        padding: 10px 16px 10px 13px;
+        box-shadow: 0 10px 26px rgba(35, 49, 44, 0.30);
+        -webkit-tap-highlight-color: transparent;
+      }
+      .resume-fab:active { transform: translateY(1px); }
+      .resume-fab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .resume-fab svg { flex: none; display: block; }
       /* "Back to home" key: one small frosted-glass disc (46px), no
          label, a fine house glyph. In every scene — the home list
          once the cover is scrolled past, the reader, the audio
@@ -1331,6 +1354,10 @@
         </button>
         <div class="wp-noaudio hidden" id="wordPopNoAudio"></div>
       </div>
+      <button class="resume-fab hidden" id="resumeFab" type="button" aria-label="继续播放">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.8v14.4c0 .9 1 1.5 1.8 1L20 13a1.2 1.2 0 0 0 0-2L8.8 3.9C8 3.4 7 4 7 4.8z"/></svg>
+        <span id="resumeFabLabel">继续播放</span>
+      </button>
     </dialog>
 
     <dialog class="reader" id="audioView" aria-label="听音频">
@@ -1528,7 +1555,7 @@
          Ummah's only clip is a truncated fragment, so it moved to
          TERM_NO_AUDIO; Qur'ān plays the verified "quran" recording
          (see the exception in speakWord). */
-      var WORD_AUDIO = {"a":"yd","abide":"yd","able":"yd","about":"yd","above":"yd","after":"yd","against":"yd","alif":"yd","all":"yd","allah":"yd1","almost":"yd","alone":"yd","an":"yd","and":"yd","angels":"yd","anger":"yd","are":"yd","around":"yd","as":"yd","ask":"yd","astray":"yd","attribute":"yd","authority":"yd","away":"yd","back":"yd","be":"yd","because":"yd","become":"yd","bed":"yd","been":"yd","before":"yd","being":"yd","believe":"yd","believed":"yd","believer":"yd","believers":"yd","beneath":"yd","bestow":"yd","bestowed":"yd","blind":"yd","blindly":"yd","blood":"yd","book":"yd","break":"yd","bring":"yd","brought":"yd","but":"yd","by":"yd","call":"yd","can":"yd","cause":"yd","causes":"yd","ceiling":"yd","certain":"yd","come":"yd","comes":"yd","competent":"yd","conscious":"yd","contracting":"yd","corrupt":"yd","corrupters":"mp3","corruption":"yd","could":"yd","covenant":"yd","created":"yd","creation":"yd","darkness":"yd","day":"yd","deaf":"yd","death":"yd","deceive":"yd","declare":"yd","deeds":"yd","defiantly":"yd","did":"yd","die":"yd","directed":"yd","disbelieve":"yd","disbeliever":"mp3","disbelievers":"mp3","disease":"yd","disobedient":"yd","do":"yd","doubt":"yd","down":"yd","dread":"yd","due":"yd","dumb":"yd","ear":"yd","earn":"yd","earned":"yd","ears":"yd","earth":"yd","encompass":"yd","encompassing":"yd","entirely":"yd","equals":"yd","error":"yd","especially":"yd","establish":"yd","eternally":"yd","every":"yd","evil":"yd","exalt":"yd","example":"yd","except":"yd","exchange":"yd","faith":"yd","favor":"yd","fear":"yd","finger":"yd","fingers":"yd","fire":"yd","flow":"yd","foolish":"yd","for":"yd","forth":"yd","from":"yd","fruit":"yd","fruits":"yd","fuel":"yd","gardens":"yd","give":"yd","given":"yd","good":"yd","great":"yd","guidance":"yd","guide":"yd","guided":"yd","guides":"yd","habitually":"yd","had":"yd","has":"yd","have":"yd","he":"yd","hear":"yd","hearing":"yd","heart":"yd","hearts":"yd","heaven":"yd","heavens":"yd","help":"yd","hereafter":"yd","him":"yd","himself":"yd","his":"yd","how":"yd","i":"yd","if":"yd","illuminate":"yd","illuminated":"yd","in":"yd","increase":"yd","increased":"yd","indeed":"yd","intend":"yd","is":"yd","it":"yd","joined":"yd","kindle":"yd","kindled":"yd","know":"yd","knowing":"yd","lam":"yd","last":"yd","left":"yd","lie":"yd","life":"yd","lifeless":"yd","light":"yd","lightning":"yd","lights":"yd","like":"yd","likeness":"yd","lord":"yd","losers":"yd","made":"yd","make":"yd","mankind":"yd","many":"yd","may":"yd","meet":"yd","mention":"yd","merciful":"yd","misleads":"mp3","mock":"yd","mockers":"yd","mocks":"yd","mosquito":"yd","mu":"yd","muhammad":"yd","name":"yd","never":"yd","no":"yd","nor":"yd","not":"yd","nothing":"yd","o":"yd","of":"yd","on":"yd","one":"yd","ones":"yd","only":"yd","or":"yd","ordered":"yd","other":"yd","our":"yd","out":"yd","over":"yd","painful":"yd","paradise":"yd","path":"yd","people":"yd","perceive":"yd","perfection":"yd","place":"yd","praise":"yd","prayer":"yd","prepared":"yd","present":"yd","produce":"yd","profit":"yd","prolong":"yd","prolongs":"yd","prophet":"yd","provide":"yd","provided":"yd","provision":"yd","punishment":"yd","purchase":"yd","purchased":"yd","purified":"yd","put":"yd","quran":"yd","qur’an":"yd","rain":"yd","rainstorm":"yd","recompense":"yd","reformer":"yd","reformers":"yd","return":"yd","returned":"yd","reveal":"yd","revealed":"yd","right":"yd","righteous":"yd","rivers":"yd","said":"yd","same":"yd","say":"yd","seal":"yd","see":"yd","sent":"yd","servant":"yd","set":"yd","seven":"yd","sever":"yd","sheds":"yd","should":"yd","sight":"yd","similar":"yd","sky":"yd","smaller":"yd","snatch":"yd","snatches":"yd","so":"yd","some":"yd","sovereign":"yd","spend":"yd","spouses":"yd","spread":"yd","stand":"yd","still":"yd","stones":"yd","straight":"yd","successful":"yd","successive":"yd","supporters":"yd","surah":"yd","taken":"yd","than":"yd","that":"yd","the":"yd","their":"yd","them":"yd","themselves":"yd","then":"yd","there":"yd","thereby":"yd","therefrom":"yd","therein":"yd","thereof":"yd","they":"yd","thing":"yd","things":"yd","think":"yd","this":"yd","those":"yd","thunder":"yd","thunderclap":"yd","thunderclaps":"yd","tidings":"yd","time":"yd","timid":"yd","to":"yd","took":"yd","transaction":"yd","transgression":"yd","truth":"yd","truthful":"yd","unquestionably":"yd","unseen":"yd","upon":"yd","us":"yd","use":"yd","used":"yd","veil":"yd","vision":"yd","walk":"yd","wander":"yd","warn":"yd","was":"yd","way":"yd","we":"yd","were":"yd","what":"yd","when":"yd","whenever":"yd","whether":"yd","which":"yd","while":"yd","who":"yd","whom":"yd","whose":"yd","will":"yd","willed":"yd","with":"yd","within":"yd","witnesses":"yd","world":"yd","worlds":"yd","worship":"yd","you":"yd","your":"yd","ayah":"yd","ayat":"yd1","qur'an":"yd","islam":"yd1","muslim":"yd","hadith":"yd","sunnah":"yd","dua":"yd","salah":"yd","salat":"yd1","iman":"yd","ihsan":"yd1","hijrah":"yd1","jinn":"yd","shaitan":"yd","dunya":"yd","sujud":"yd","sadaqa":"yd1","shaykh":"yd","wudu":"yd1","deen":"yd","adhan":"yd","fajr":"yd1","shahada":"yd1","shaheed":"yd1","khalifah":"yd1","iblis":"yd","rasulullah":"yd1","musa":"yd","isa":"yd","dawud":"yd","ishaq":"yd","sulayman":"yd1","yahya":"yd1","umar":"yd","khadijah":"yd","madinah":"yd","ali":"yd","malik":"yd","jabbar":"yd","faruq":"yd","adil":"yd","tahira":"yd","haya":"yd1","banu":"yd","abu":"yd","abd":"yd","ibn":"yd1","rabb":"yd","sit":"yd"};
+      var WORD_AUDIO = {"a":"yd","abide":"yd","able":"yd","about":"yd","above":"yd","after":"yd","against":"yd","alif":"yd","all":"yd","allah":"yd1","almost":"yd","alone":"yd","an":"yd","and":"yd","angels":"yd","anger":"yd","are":"yd","around":"yd","as":"yd","ask":"yd","astray":"yd","attribute":"yd","authority":"yd","away":"yd","back":"yd","be":"yd","because":"yd","become":"yd","bed":"yd","been":"yd","before":"yd","being":"yd","believe":"yd","believed":"yd","believer":"yd","believers":"yd","beneath":"yd","bestow":"yd","bestowed":"yd","blind":"yd","blindly":"yd","blood":"yd","book":"yd","break":"yd","bring":"yd","brought":"yd","but":"yd","by":"yd","call":"yd","can":"yd","cause":"yd","causes":"yd","ceiling":"yd","certain":"yd","come":"yd","comes":"yd","competent":"yd","conscious":"yd","contracting":"yd","corrupt":"yd","corrupters":"mp3","corruption":"yd","could":"yd","covenant":"yd","created":"yd","creation":"yd","darkness":"yd","day":"yd","deaf":"yd","death":"yd","deceive":"yd","declare":"yd","deeds":"yd","defiantly":"yd","did":"yd","die":"yd","directed":"yd","disbelieve":"yd","disbeliever":"mp3","disbelievers":"mp3","disease":"yd","disobedient":"yd","do":"yd","doubt":"yd","down":"yd","dread":"yd","due":"yd","dumb":"yd","ear":"yd","earn":"yd","earned":"yd","ears":"yd","earth":"yd","encompass":"yd","encompassing":"yd","entirely":"yd","equals":"yd","error":"yd","especially":"yd","establish":"yd","eternally":"yd","every":"yd","evil":"yd","exalt":"yd","example":"yd","except":"yd","exchange":"yd","faith":"yd","favor":"yd","fear":"yd","finger":"yd","fingers":"yd","fire":"yd","flow":"yd","foolish":"yd","for":"yd","forth":"yd","from":"yd","fruit":"yd","fruits":"yd","fuel":"yd","gardens":"yd","give":"yd","given":"yd","good":"yd","great":"yd","guidance":"yd","guide":"yd","guided":"yd","guides":"yd","habitually":"yd","had":"yd","has":"yd","have":"yd","he":"yd","hear":"yd","hearing":"yd","heart":"yd","hearts":"yd","heaven":"yd","heavens":"yd","help":"yd","hereafter":"yd","him":"yd","himself":"yd","his":"yd","how":"yd","i":"yd","if":"yd","illuminate":"yd","illuminated":"yd","in":"yd","increase":"yd","increased":"yd","indeed":"yd","intend":"yd","is":"yd","it":"yd","joined":"yd","kindle":"yd","kindled":"yd","know":"yd","knowing":"yd","lam":"yd","last":"yd","left":"yd","lie":"yd","life":"yd","lifeless":"yd","light":"yd","lightning":"yd","lights":"yd","like":"yd","likeness":"yd","lord":"yd","losers":"yd","made":"yd","make":"yd","mankind":"yd","many":"yd","may":"yd","meet":"yd","mention":"yd","merciful":"yd","misleads":"mp3","mock":"yd","mockers":"yd","mocks":"yd","mosquito":"yd","mu":"yd","muhammad":"yd","name":"yd","never":"yd","no":"yd","nor":"yd","not":"yd","nothing":"yd","o":"yd","of":"yd","on":"yd","one":"yd","ones":"yd","only":"yd","or":"yd","ordered":"yd","other":"yd","our":"yd","out":"yd","over":"yd","painful":"yd","paradise":"yd","path":"yd","people":"yd","perceive":"yd","perfection":"yd","place":"yd","praise":"yd","prayer":"yd","prepared":"yd","present":"yd","produce":"yd","profit":"yd","prolong":"yd","prolongs":"yd","prophet":"yd","provide":"yd","provided":"yd","provision":"yd","punishment":"yd","purchase":"yd","purchased":"yd","purified":"yd","put":"yd","quran":"yd","qur’an":"yd","rain":"yd","rainstorm":"yd","recompense":"yd","reformer":"yd","reformers":"yd","return":"yd","returned":"yd","reveal":"yd","revealed":"yd","right":"yd","righteous":"yd","rivers":"yd","said":"yd","same":"yd","say":"yd","seal":"yd","see":"yd","sent":"yd","servant":"yd","set":"yd","seven":"yd","sever":"yd","sheds":"yd","should":"yd","sight":"yd","similar":"yd","sky":"yd","smaller":"yd","snatch":"yd","snatches":"yd","so":"yd","some":"yd","sovereign":"yd","spend":"yd","spouses":"yd","spread":"yd","stand":"yd","still":"yd","stones":"yd","straight":"yd","successful":"yd","successive":"yd","supporters":"yd","surah":"yd","taken":"yd","than":"yd","that":"yd","the":"yd","their":"yd","them":"yd","themselves":"yd","then":"yd","there":"yd","thereby":"yd","therefrom":"yd","therein":"yd","thereof":"yd","they":"yd","thing":"yd","things":"yd","think":"yd","this":"yd","those":"yd","thunder":"yd","thunderclap":"yd","thunderclaps":"yd","tidings":"yd","time":"yd","timid":"yd","to":"yd","took":"yd","transaction":"yd","transgression":"yd","truth":"yd","truthful":"yd","unquestionably":"yd","unseen":"yd","upon":"yd","us":"yd","use":"yd","used":"yd","veil":"yd","vision":"yd","walk":"yd","wander":"yd","warn":"yd","was":"yd","way":"yd","we":"yd","were":"yd","what":"yd","when":"yd","whenever":"yd","whether":"yd","which":"yd","while":"yd","who":"yd","whom":"yd","whose":"yd","will":"yd","willed":"yd","with":"yd","within":"yd","witnesses":"yd","world":"yd","worlds":"yd","worship":"yd","you":"yd","your":"yd","ayah":"yd","ayat":"yd1","qur'an":"yd","islam":"yd1","muslim":"yd","hadith":"yd","sunnah":"yd","dua":"yd","salah":"yd","salat":"yd1","iman":"yd","ihsan":"yd1","hijrah":"yd1","jinn":"yd","shaitan":"yd","dunya":"yd","sujud":"yd","sadaqa":"yd1","shaykh":"yd","wudu":"yd1","deen":"yd","adhan":"yd","fajr":"yd1","shahada":"yd1","shaheed":"yd1","khalifah":"yd1","iblis":"yd","rasulullah":"yd1","musa":"yd","isa":"yd","dawud":"yd","ishaq":"yd","sulayman":"yd1","yahya":"yd1","umar":"yd","khadijah":"yd","madinah":"yd","ali":"yd","malik":"yd","jabbar":"yd","faruq":"yd","adil":"yd","tahira":"yd","haya":"yd1","banu":"yd","abu":"yd","abd":"yd","ibn":"yd1","rabb":"yd","sit":"yd","adagrad":"yd1","adham":"yd1","adhkar":"yd1","allah's":"yd1","amirul":"yd1","ar-rahman":"yd1","backprop":"yd1","carlo":"yd1","chernoff":"yd1","elbo":"yd1","grain-fields":"yd1","greff":"yd1","grunwald":"yd1","hanifa":"yd1","hayat":"yd1","hazm":"yd1","idrees":"yd1","inni":"yd1","jibran":"yd1","karpathy":"yd1","lifelessness":"yd1","low-energy":"yd1","lstm":"yd1","mackay":"yd1","mastodons":"yd1","memorizes":"yd1","model's":"yd1","nakba":"yd1","overlooks":"yd1","paper's":"yd1","pixel-level":"yd1","post's":"yd1","public-service":"yd1","purifies":"yd1","purple-red":"yd1","rajab":"yd1","recalibrates":"yd1","resamples":"yd1","saeed":"yd1","saint-exupery":"yd1","sariah":"yd1","sirin":"yd1","soul's":"yd1","startles":"yd1","suffices":"yd1","sunan":"yd1","tamanna":"yd1","thabit":"yd1","theory's":"yd1","treebank":"yd1","ulum":"yd1","vocalizes":"yd1","weeps":"yd1","woods's":"yd1","yamama":"yd1","yazid":"yd1","yesterday's":"yd1","ziqing":"yd1","zlib":"yd1","abbas's":"yd1","khattab":"yd1","makkah":"yd1","yunus":"yd1"};
       /* The site's own neural-TTS pronunciations for the forms
          dictvoice does not carry (see WORD_AUDIO), embedded as base64
          data so this page is a single self-contained file: playing one
@@ -1941,20 +1968,304 @@
         "rabb": { t: "n. 主（拉卜，安拉的尊称，意为养育者）", p: "", en: "n. 'Lord' — a name of Allah, the Sustainer" },
         "lām": { t: "n. 俩目（阿拉伯字母名；《古兰经》某些章首的断字字母之一）", p: "", en: "n. the Arabic letter Lam, one of the detached letters opening some chapters of the Qur'an" },
         "ṣīt": { t: "n. 名声（在诸天的名声）", p: "", en: "n. one's reputation or name (in the heavens)" }
-      };
+      ,
+        "uhud": { t: "n. 乌侯德山（麦地那城北的山，伊历3年／公元625年乌侯德之战的发生地）", p: "", en: "n. Mount Uhud, north of Madinah; site of the Battle of Uhud (625 CE)" },
+        "shuhada": { t: "n. 烈士们（殉道者，shaheed 的复数）", p: "", en: "n. martyrs (plural of shaheed)" },
+        "hamza": { t: "n. 哈姆扎（先知穆罕默德的叔父，乌侯德之战中殉道，被誉为「烈士之首」）", p: "", en: "n. Hamza, the Prophet's uncle, martyred at Uhud" },
+        "khattab": { t: "n. 哈塔卜（欧麦尔之父；「伊本·哈塔卜」即第二任哈里发欧麦尔）", p: "", en: "n. al-Khattab, father of Umar" },
+        "makkah": { t: "n. 麦加（伊斯兰教最神圣的城市，天房克尔白所在地）", p: "", en: "n. Makkah, the holiest city of Islam" },
+        "nuh": { t: "n. 努哈（先知努哈，即挪亚）", p: "", en: "n. Prophet Nuh (Noah)" },
+        "yunus": { t: "n. 优努斯（先知优努斯，即约拿）", p: "", en: "n. Prophet Yunus (Jonah)" },
+        "zakariya": { t: "n. 宰凯里亚（先知宰凯里亚，叶海亚之父）", p: "", en: "n. Prophet Zakariya, father of Yahya" },
+        "idrees": { t: "n. 伊德里斯（本文指伊玛目沙斐仪之名：穆罕默德·本·伊德里斯；伊德里斯亦为先知之名）", p: "", en: "n. Idris — here the name of Imam al-Shafi'i, Muhammad ibn Idris" },
+        "anas": { t: "n. 艾奈斯·本·马立克（圣门弟子，先知的侍从）", p: "", en: "n. Anas ibn Malik, companion and servant of the Prophet" },
+        "adham": { t: "n. 艾德海姆（易卜拉欣·本·艾德海姆，早期苦行者与学者）", p: "", en: "n. Ibrahim ibn Adham, early ascetic and scholar" },
+        "jabir": { t: "n. 贾比尔·本·阿卜杜拉（圣门弟子）", p: "", en: "n. Jabir ibn Abdullah, companion" },
+        "hassan": { t: "n. 哈桑（本文指哈桑·巴士里，早期伊斯兰学者）", p: "", en: "n. Hasan al-Basri, early Islamic scholar" },
+        "qais": { t: "n. 盖斯（阿拉伯语人名，如盖斯·本·安巴德）", p: "", en: "n. Qays, an Arabic name" },
+        "sirin": { t: "n. 穆罕默德·本·西林（再传弟子，著名释梦者）", p: "", en: "n. Muhammad ibn Sirin, famed interpreter of dreams" },
+        "waki": { t: "n. 瓦基·本·贾拉赫（圣训学家）", p: "", en: "n. Waki' ibn al-Jarrah, hadith scholar" },
+        "azib": { t: "n. 阿齐布（圣门弟子拜拉·本·阿齐布之父名）", p: "", en: "n. the father of the companion al-Bara' ibn Azib" },
+        "bishr": { t: "n. 比希尔（圣门弟子安巴德·本·比希尔之父名）", p: "", en: "n. the father of the companion Abbad ibn Bishr" },
+        "hudhafa": { t: "n. 胡宰法（圣门弟子阿卜杜拉·本·胡宰法之父名）", p: "", en: "n. the father of the companion Abdullah ibn Hudhafa" },
+        "hurayra": { t: "n. 胡莱拉（艾布·胡莱拉，圣门弟子，传述圣训最多的人）", p: "", en: "n. Abu Hurayra, the companion who narrated the most hadith" },
+        "ja'far": { t: "n. 贾法尔（先知的堂兄，穆尔泰之战殉道）", p: "", en: "n. Ja'far ibn Abi Talib, the Prophet's cousin, martyred at Mu'tah" },
+        "abbad": { t: "n. 安巴德·本·比希尔（圣门弟子，耶马麦之战殉道）", p: "", en: "n. Abbad ibn Bishr, companion martyred at Yamama" },
+        "abdillah": { t: "n. 阿卜杜拉（「艾布·阿卜杜拉」是伊玛目艾哈迈德的别号）", p: "", en: "n. Abu Abdillah, the kunya of Imam Ahmad" },
+        "mas'ud": { t: "n. 马斯欧德（本文指伊本·马斯欧德，圣门弟子）", p: "", en: "n. Ibn Mas'ud, companion" },
+        "masruq": { t: "n. 马斯鲁格（再传弟子，学者）", p: "", en: "n. Masruq, a scholar of the generation after the companions" },
+        "sa'd": { t: "n. 萨阿德（本文指萨阿德·本·穆阿兹，圣门弟子）", p: "", en: "n. Sa'd ibn Mu'adh, companion" },
+        "tufayl": { t: "n. 图法伊尔·本·阿慕尔（圣门弟子）", p: "", en: "n. Tufayl ibn Amr, companion" },
+        "thabit": { t: "n. 萨比特·本·盖斯（圣门弟子）", p: "", en: "n. Thabit ibn Qays, companion" },
+        "thabat": { t: "n. 萨巴特（萨比特的转写变体，人名）", p: "", en: "n. a variant spelling of Thabit" },
+        "yazid": { t: "n. 亚齐德（本文指阿布·亚齐德·巴斯塔米，早期苏菲）", p: "", en: "n. Abu Yazid al-Bustami, early Sufi" },
+        "saeed": { t: "n. 赛义德（阿拉伯语人名，意为「幸福者」）", p: "", en: "n. Sa'id, an Arabic name meaning 'blessed'" },
+        "shaddad": { t: "n. 善达德·本·奥斯（圣门弟子）", p: "", en: "n. Shaddad ibn Aws, companion" },
+        "kishk": { t: "n. 基什克（阿卜杜·哈米德·基什克，埃及学者与演说家）", p: "", en: "n. Abd al-Hamid Kishk, Egyptian scholar and preacher" },
+        "hanbal": { t: "n. 罕百勒（伊玛目艾哈迈德·本·罕百勒，罕百里学派创始人）", p: "", en: "n. Ahmad ibn Hanbal, founder of the Hanbali school" },
+        "hibban": { t: "n. 希班（伊本·希班，圣训学家）", p: "", en: "n. Ibn Hibban, hadith scholar" },
+        "kathir": { t: "n. 凯西尔（伊本·凯西尔，经注学家与史学家）", p: "", en: "n. Ibn Kathir, exegete and historian" },
+        "sariah": { t: "n. 萨里亚（欧麦尔麾下的将领）", p: "", en: "n. Sariah, a commander under Umar" },
+        "sariatul": { t: "n. 萨里亚（呼格词形：欧麦尔隔空呼喊其将领之语）", p: "", en: "n. vocative form of Sariah" },
+        "saudah": { t: "n. 绍达（人名，奥斯曼·本·绍达之父名）", p: "", en: "n. Saudah, father of Uthman ibn Saudah" },
+        "rahiba": { t: "n. 拉希芭（人名，奥斯曼·本·绍达之母）", p: "", en: "n. Rahiba, mother of Uthman ibn Saudah" },
+        "usama": { t: "n. 奥萨马（阿拉伯语人名）", p: "", en: "n. Usama, an Arabic name" },
+        "suhaib": { t: "n. 苏海卜·韦布（美国伊玛目，本文作者）", p: "", en: "n. Suhaib Webb, American imam" },
+        "su'ayr": { t: "n. 苏艾尔·本·海姆斯（圣门弟子）", p: "", en: "n. Su'ayr ibn al-Khims, companion" },
+        "hammuda": { t: "n. 哈穆达（Ali Hammuda，伊斯兰讲师）", p: "", en: "n. Ali Hammuda, Islamic lecturer" },
+        "assaad": { t: "n. 阿萨德（Belal Assaad，澳大利亚伊斯兰讲师）", p: "", en: "n. Belal Assaad, Australian Islamic lecturer" },
+        "jibran": { t: "n. 吉卜兰（本文指雅给因研究所的 Jibran Khokhar 博士）", p: "", en: "n. Dr. Jibran Khokhar of Yaqeen Institute" },
+        "khokhar": { t: "n. 霍哈尔（姓氏，如 Jibran Khokhar）", p: "", en: "n. Khokhar, a surname" },
+        "uyayna": { t: "n. 欧亚伊纳（苏菲扬·本·欧亚伊纳，圣训学家）", p: "", en: "n. Sufyan ibn Uyayna, hadith scholar" },
+        "mu'adh": { t: "n. 穆阿兹·本·杰拜勒（圣门弟子）", p: "", en: "n. Mu'adh ibn Jabal, companion" },
+        "shayba": { t: "n. 谢拜（人名，如圣训学家伊本·艾布·谢拜）", p: "", en: "n. Shayba, a name (e.g. Ibn Abi Shayba)" },
+        "salim": { t: "（阿拉伯语短语词形）向……致安（问候），如「向欧麦尔致安」", p: "", en: "verb form: 'give greetings to…', in the phrase 'Salim ala Umar'" },
+        "al-albani": { t: "n. 阿尔巴尼（穆罕默德·纳西尔丁·阿尔巴尼，圣训学家）", p: "", en: "n. Muhammad Nasir ad-Din al-Albani, hadith scholar" },
+        "al-baghdadi": { t: "n. 巴格达迪（本文指哈提卜·巴格达迪，《巴格达史》作者）", p: "", en: "n. al-Khatib al-Baghdadi, historian of Baghdad" },
+        "al-basri": { t: "n. 巴士里（本文指哈桑·巴士里）", p: "", en: "n. Hasan al-Basri" },
+        "al-bayhaqi": { t: "n. 白伊哈基（圣训学家）", p: "", en: "n. al-Bayhaqi, hadith scholar" },
+        "al-bustami": { t: "n. 巴斯塔米（阿布·亚齐德·巴斯塔米，早期苏菲）", p: "", en: "n. Abu Yazid al-Bustami, early Sufi" },
+        "al-dahhak": { t: "n. 丹哈克（早期经注传述者）", p: "", en: "n. al-Dahhak, early exegete" },
+        "al-darimi": { t: "n. 达里米（圣训学家，《达里米圣训集》编者）", p: "", en: "n. al-Darimi, hadith scholar" },
+        "al-dhahabi": { t: "n. 宰海比（史学家、圣训学家，《名人传记》作者）", p: "", en: "n. al-Dhahabi, historian and hadith scholar" },
+        "al-ghazali": { t: "n. 加扎利（伊玛目加扎利，《宗教科学的复兴》作者）", p: "", en: "n. Imam al-Ghazali" },
+        "al-hakim": { t: "n. 哈基姆（圣训学家，《穆斯塔德拉克》编者）", p: "", en: "n. al-Hakim, hadith scholar" },
+        "al-jawzi": { t: "n. 焦齐（伊本·焦齐之名的一部分，学者）", p: "", en: "n. part of the name of Ibn al-Jawzi, scholar" },
+        "al-khatib": { t: "n. 哈提卜（本文指哈提卜·巴格达迪）", p: "", en: "n. al-Khatib al-Baghdadi" },
+        "al-maqdisi": { t: "n. 麦格迪西（圣训学家）", p: "", en: "n. al-Maqdisi, hadith scholar" },
+        "al-qayyim": { t: "n. 盖伊姆（伊本·盖伊姆之名的一部分，学者）", p: "", en: "n. part of the name of Ibn al-Qayyim, scholar" },
+        "al-qurtubi": { t: "n. 古尔图比（经注学家）", p: "", en: "n. al-Qurtubi, exegete" },
+        "al-shafi'i": { t: "n. 沙斐仪（伊玛目沙斐仪，沙斐仪学派创始人）", p: "", en: "n. Imam al-Shafi'i, founder of the Shafi'i school" },
+        "al-tabari": { t: "n. 泰伯里（史学家、经注学家）", p: "", en: "n. al-Tabari, historian and exegete" },
+        "al-thawri": { t: "n. 绍里（苏菲扬·绍里，早期学者）", p: "", en: "n. Sufyan al-Thawri, early scholar" },
+        "an-nasa'i": { t: "n. 奈萨仪（圣训学家，《奈萨仪圣训集》编者）", p: "", en: "n. al-Nasa'i, hadith scholar" },
+        "at-tirmidhi": { t: "n. 提尔米基（圣训学家，《提尔米基圣训集》编者）", p: "", en: "n. al-Tirmidhi, hadith scholar" },
+        "at-tabarani": { t: "n. 泰伯拉尼（圣训学家，《圣训大辞典》编者）", p: "", en: "n. al-Tabarani, hadith scholar" },
+        "hanifa": { t: "n. 哈尼法（艾布·哈尼法，哈乃斐学派创始人）", p: "", en: "n. Abu Hanifa, founder of the Hanafi school" },
+        "taymiyyah": { t: "n. 泰米叶（伊本·泰米叶，学者）", p: "", en: "n. Ibn Taymiyyah, scholar" },
+        "al-zangi": { t: "n. 赞吉（努尔丁·赞吉，赞吉王朝君主，萨拉丁的前驱）", p: "", en: "n. Nur ad-Din Zangi, ruler and predecessor of Salah ad-Din" },
+        "al-barr": { t: "n. 拜尔（伊本·阿卜杜·拜尔，《圣门弟子传》作者）", p: "", en: "n. Ibn Abd al-Barr, scholar" },
+        "al-bara": { t: "n. 拜拉（拜拉·本·阿齐布，圣门弟子）", p: "", en: "n. al-Bara' ibn Azib, companion" },
+        "al-as": { t: "n. 阿斯（圣门弟子、将领阿慕尔·本·阿斯之父名）", p: "", en: "n. the father of the companion Amr ibn al-As" },
+        "al-hakam": { t: "n. 哈凯姆（「艾布·哈凯姆」是艾布·贾赫勒的别号，意为「智慧之父」）", p: "", en: "n. Abu al-Hakam, the kunya of Abu Jahl" },
+        "al-khims": { t: "n. 海姆斯（圣门弟子苏艾尔·本·海姆斯之父名）", p: "", en: "n. the father of the companion Su'ayr" },
+        "al-muthanna": { t: "n. 穆桑纳·本·赛义德（传述者）", p: "", en: "n. al-Muthanna ibn Sa'id, a narrator" },
+        "al-nu'man": { t: "n. 努尔曼·本·拜希尔（圣门弟子）", p: "", en: "n. al-Nu'man ibn Bashir, companion" },
+        "al-ja'afari": { t: "n. 贾法里（本文指萨达卡·本·苏莱曼·贾法里）", p: "", en: "n. Sadaqa ibn Sulayman al-Ja'afari" },
+        "al-jawli": { t: "n. 焦利（早期传述者）", p: "", en: "n. al-Jawli, an early narrator" },
+        "a'lam": { t: "（书名的一部分）《名人传记》（宰海比著）中的「名人」", p: "", en: "part of the title Siyar A'lam al-Nubala', 'Biographies of the Noble Figures'" },
+        "al-nubala": { t: "（书名的一部分）《名人传记》中的「名人」（复数）", p: "", en: "'the noble figures' — part of the title Siyar A'lam al-Nubala'" },
+        "siyar": { t: "n. 传记（书名《名人传记》的首词）", p: "", en: "n. biographies — first word of Siyar A'lam al-Nubala'" },
+        "al-awsat": { t: "n. 《中辞典》（泰伯拉尼编圣训辞典）", p: "", en: "n. al-Mu'jam al-Awsat, al-Tabarani's hadith dictionary" },
+        "al-mu'jam": { t: "n. 圣训辞典（泰伯拉尼编）", p: "", en: "n. al-Mu'jam, al-Tabarani's hadith dictionary" },
+        "al-bidaya": { t: "（书名首词）《始与末》（伊本·凯西尔编年史）", p: "", en: "first word of al-Bidaya wa'l-Nihaya, Ibn Kathir's history" },
+        "wa'l-nihaya": { t: "（书名后半）《始与末》中的「与终结」", p: "", en: "'and the End' — second part of al-Bidaya wa'l-Nihaya" },
+        "al-isti'ab": { t: "n. 《圣门弟子传》（伊本·阿卜杜·拜尔著）", p: "", en: "n. al-Isti'ab, biographies of the companions" },
+        "al-jami": { t: "n. 《圣训汇编》（阿尔巴尼校订）", p: "", en: "n. Sahih al-Jami', al-Albani's hadith collection" },
+        "al-manam": { t: "n. 《梦之书》（伊本·艾布·顿亚著）", p: "", en: "n. Kitab al-Manam, the Book of Dreams" },
+        "al-musannaf": { t: "n. 《穆桑奈夫》（伊本·艾布·谢拜编圣训集）", p: "", en: "n. al-Musannaf of Ibn Abi Shayba" },
+        "al-mustadrak": { t: "n. 《穆斯塔德拉克》（哈基姆编圣训集）", p: "", en: "n. al-Mustadrak of al-Hakim" },
+        "al-ruh": { t: "n. 《灵魂之书》（伊本·盖伊姆著）", p: "", en: "n. Kitab al-Ruh, the Book of the Soul" },
+        "al-safwa": { t: "（书名的一部分）《精选传记》（伊本·焦齐著）中的「精选」", p: "", en: "'the chosen' — in Sifat al-Safwa by Ibn al-Jawzi" },
+        "al-sunan": { t: "n. 《圣训集》（书名通称）", p: "", en: "n. al-Sunan, hadith collections" },
+        "sunan": { t: "n. 圣训集（书名通称，如《奈萨仪圣训集》）", p: "", en: "n. Sunan, hadith collections" },
+        "at-tabaqat": { t: "n. 《传记层谱》（伊本·萨阿德著）", p: "", en: "n. al-Tabaqat of Ibn Sa'd" },
+        "at-tadhkirah": { t: "n. 《备忘录》（古尔图比著，论死亡与后世）", p: "", en: "n. al-Tadhkirah of al-Qurtubi, on death and the hereafter" },
+        "al-tawadu": { t: "（书名的一部分）《谦逊与默默无闻》（伊本·艾布·顿亚著）中的「谦逊」", p: "", en: "'humility' — in Kitab al-Tawadu' wa'l-Khumul" },
+        "wa'l-khumul": { t: "（书名后半）《谦逊与默默无闻》中的「与默默无闻」", p: "", en: "'and obscurity' — part of Kitab al-Tawadu' wa'l-Khumul" },
+        "al-fatawa": { t: "（书名的一部分）《教法判例全集》（伊本·泰米叶著）中的「判例」", p: "", en: "'the fatwas' — in Majmu' al-Fatawa" },
+        "majmu": { t: "n. 全集（书名首词）", p: "", en: "n. 'collection' — first word of book titles" },
+        "al-zuhd": { t: "n. 《修行书》（书名；zuhd 指俭朴弃世的修行）", p: "", en: "n. Kitab al-Zuhd, the Book of Asceticism" },
+        "hilyat": { t: "（书名首词）《信士之饰》（阿布·努艾姆著圣徒传记）", p: "", en: "first word of Hilyat al-Awliya', biographies of the righteous" },
+        "al-awliya": { t: "n. 安拉的友人（蒙安拉喜爱的虔敬者）", p: "", en: "n. the friends of Allah, the righteous" },
+        "shu'ab": { t: "n. 分支（书名《信仰分支》中的词）", p: "", en: "n. 'branches' — in Shu'ab al-Iman" },
+        "al-iman": { t: "n. 信仰（书名中指白伊哈基《信仰分支》）", p: "", en: "n. faith — in the title Shu'ab al-Iman" },
+        "ihya": { t: "n. 《复兴》（《宗教科学的复兴》的简称）", p: "", en: "n. 'Revival' — short for Ihya' 'Ulum al-Din" },
+        "ulum": { t: "n. 学问（书名《宗教科学的复兴》中的词）", p: "", en: "n. 'sciences' — in Ihya' 'Ulum al-Din" },
+        "al-din": { t: "n. 宗教（书名中如《宗教科学的复兴》）", p: "", en: "n. religion — in book titles" },
+        "ad-din": { t: "n. 宗教（din 的构成词形）", p: "", en: "n. religion (a form of din)" },
+        "kitab": { t: "n. 书（阿拉伯语；书名首词，意为《……书》）", p: "", en: "n. 'book' — first word of Arabic book titles" },
+        "tarikh": { t: "n. 历史（书名中如《巴格达史》）", p: "", en: "n. 'history' — in book titles" },
+        "musnad": { t: "n. 《穆斯奈德》（按传述人编排的圣训集）", p: "", en: "n. Musnad, a hadith collection arranged by narrator" },
+        "mishkat": { t: "n. 《光龛》（圣训集 Mishkat al-Masabih）", p: "", en: "n. Mishkat al-Masabih, a hadith collection" },
+        "al-imam": { t: "n. 伊玛目（书名中多指伊玛目艾哈迈德）", p: "", en: "n. the Imam — in titles, Imam Ahmad" },
+        "al-da": { t: "（书名首词）《疾病与良药》（伊本·盖伊姆著）中的「疾病」", p: "", en: "'the Disease' — in al-Da' wa'l-Dawa' by Ibn al-Qayyim" },
+        "wa'l-dawa": { t: "（书名后半）《疾病与良药》中的「与良药」", p: "", en: "'and the Cure' — part of al-Da' wa'l-Dawa'" },
+        "hadeethenc": { t: "n. 圣训百科（HadeethEnc，在线圣训百科网站）", p: "", en: "n. HadeethEnc, an online hadith encyclopedia" },
+        "dorar": { t: "n. 多拉尔（圣训检索网站，阿拉伯语意为「珍珠」）", p: "", en: "n. al-Dorar al-Saniyyah, a hadith website ('pearls')" },
+        "al-buruj": { t: "n. 《星座》章（《古兰经》第85章）", p: "", en: "n. Surah al-Buruj (chapter 85)" },
+        "al-fatiha": { t: "n. 《开端》章（《古兰经》第1章）", p: "", en: "n. Surah al-Fatiha (chapter 1)" },
+        "al-hadid": { t: "n. 《铁》章（《古兰经》第57章）", p: "", en: "n. Surah al-Hadid (chapter 57)" },
+        "al-imran": { t: "n. 《伊姆兰的家属》章（《古兰经》第3章）", p: "", en: "n. Surah Aal-e-Imran (chapter 3)" },
+        "al-isra": { t: "n. 《夜行》章（《古兰经》第17章）", p: "", en: "n. Surah al-Isra (chapter 17)" },
+        "al-mu'minun": { t: "n. 《信士》章（《古兰经》第23章）", p: "", en: "n. Surah al-Mu'minun (chapter 23)" },
+        "ghafir": { t: "n. 《赦宥者》章（《古兰经》第40章）", p: "", en: "n. Surah Ghafir (chapter 40)" },
+        "al-fajr": { t: "n. 晨礼（每日五次礼拜的第一拜，黎明时举行）", p: "", en: "n. the dawn prayer (Fajr)" },
+        "al-aqsa": { t: "n. 远寺（耶路撒冷的阿克萨清真寺）", p: "", en: "n. al-Aqsa Mosque in Jerusalem" },
+        "al-masjid": { t: "n. 清真寺（masjid 的定冠词形式）", p: "", en: "n. the mosque (definite form of masjid)" },
+        "al-maqdis": { t: "n. 圣地（Bayt al-Maqdis 指耶路撒冷）", p: "", en: "n. 'the Holy' — in Bayt al-Maqdis, Jerusalem" },
+        "bayt": { t: "n. 殿、家（Bayt al-Maqdis 指耶路撒冷圣地）", p: "", en: "n. 'house' — in Bayt al-Maqdis" },
+        "ash-sham": { t: "n. 沙姆（历史地区，今叙利亚、约旦、巴勒斯坦一带）", p: "", en: "n. al-Sham, the Levant" },
+        "arafah": { t: "n. 阿拉法（麦加附近的平原，朝觐的主要仪式在此举行）", p: "", en: "n. Arafah, the plain near Makkah" },
+        "muzdalifah": { t: "n. 穆兹代里法（阿拉法与米纳之间的朝觐驻地）", p: "", en: "n. Muzdalifah, a Hajj station" },
+        "yamama": { t: "n. 耶马麦（阿拉伯半岛地名，耶马麦之战发生地）", p: "", en: "n. al-Yamama, region and battle site" },
+        "rajab": { t: "n. 赖哲卜月（伊历第七个月，圣月之一）", p: "", en: "n. Rajab, the seventh Islamic month" },
+        "nakba": { t: "n. 大灾难（1948年巴勒斯坦人大流离事件）", p: "", en: "n. the Nakba, the 1948 Palestinian displacement" },
+        "yaqeen": { t: "n. 雅给因研究所（Yaqeen Institute，伊斯兰研究机构）", p: "", en: "n. Yaqeen Institute" },
+        "al-barzakh": { t: "n. 巴尔扎赫（barzakh 的定冠词形式）", p: "", en: "n. al-Barzakh (definite form of barzakh)" },
+        "al-dunya": { t: "n. 今世（dunya 的定冠词形式）", p: "", en: "n. this world (definite form of dunya)" },
+        "al-baydhakh": { t: "n. （河名）本文抄本写作 al-Baydhakh，讲者注其应为巴尔扎赫之河", p: "", en: "n. a river's name as written in one manuscript; the speaker notes it reads al-Barzakh" },
+        "illiyyun": { t: "n. 伊利因（至高之处，义人记录的归宿，与锡金相对）", p: "", en: "n. 'Illiyyun, the register of the righteous" },
+        "sijjin": { t: "n. 锡金（最下之处，恶人记录的归宿，与伊利因相对）", p: "", en: "n. Sijjin, the register of the wicked" },
+        "an-nafs": { t: "n. 灵魂（nafs 的定冠词形式）", p: "", en: "n. the soul (definite form of nafs)" },
+        "un-nafs": { t: "n. 灵魂（an-nafs 的转写变体）", p: "", en: "n. the soul (variant of an-nafs)" },
+        "nafs": { t: "n. 灵魂、自我（hadith an-nafs 指内心的自语）", p: "", en: "n. the soul, the self; hadith an-nafs = inner self-talk" },
+        "nur": { t: "n. 努尔（阿拉伯语意为「光」；亦见于人名，如努尔丁）", p: "", en: "n. Nur, 'light'; also part of names such as Nur ad-Din" },
+        "adhkar": { t: "n. 记诵词（晨昏记念安拉的祈祷词，dhikr 的复数）", p: "", en: "n. adhkar, words of remembrance (plural of dhikr)" },
+        "athkar": { t: "n. 记诵词（adhkar 的转写变体）", p: "", en: "n. variant spelling of adhkar" },
+        "ahadith": { t: "n. 圣训（hadith 的复数）", p: "", en: "n. hadiths (plural of hadith)" },
+        "hadeeth": { t: "n. 圣训（hadith 的转写变体）", p: "", en: "n. variant spelling of hadith" },
+        "saheeh": { t: "a. 可靠的（圣训等级，同 sahih）", p: "", en: "a. authentic (variant of sahih)" },
+        "sahih": { t: "a. 可靠的（圣训鉴别等级；《布哈里圣训实录》即 Sahih al-Bukhari）", p: "", en: "a. authentic — the highest grade of hadith" },
+        "aqeeqah": { t: "n. 阿给盖（新生儿出生后宰牲感恩的仪式）", p: "", en: "n. aqiqah, the sacrifice offered for a newborn" },
+        "ihram": { t: "n. 受戒（进入朝觐或副朝的宗教状态，身着戒衣）", p: "", en: "n. ihram, the sacred state of Hajj or Umrah" },
+        "kafan": { t: "n. 裹尸布（下葬时包裹遗体的白布）", p: "", en: "n. the burial shroud" },
+        "tawaf": { t: "n. 巡礼（环绕天房克尔白巡行）", p: "", en: "n. tawaf, circling the Kaaba" },
+        "tafsir": { t: "n. 经注（《古兰经》注释）", p: "", en: "n. tafsir, Qur'an commentary" },
+        "jamra": { t: "n. 射石柱（朝觐中投石驱魔的石柱）", p: "", en: "n. the stone pillar pelted during Hajj" },
+        "labbayk": { t: "（朝觐应召词）我应召而来", p: "", en: "'here I am' — the pilgrim's response, the talbiyah" },
+        "qiyam": { t: "n. 夜礼（夜间礼拜）", p: "", en: "n. qiyam, the night prayer" },
+        "qudsi": { t: "a. 圣洁的（hadith qudsi 指安拉以第一人称讲述的圣训）", p: "", en: "a. sacred — a hadith qudsi is narrated in Allah's voice" },
+        "sajda": { t: "n. 叩头（礼拜中的叩头，同 sujud）", p: "", en: "n. prostration (variant of sujud)" },
+        "sujood": { t: "n. 叩头（sujud 的转写变体）", p: "", en: "n. prostration (variant of sujud)" },
+        "tahleel": { t: "n. 诵念清真言（tahlil 的转写变体）", p: "", en: "n. variant of tahlil" },
+        "tahmeed": { t: "n. 诵念赞主词（tahmid 的转写变体）", p: "", en: "n. variant of tahmid" },
+        "subhanahu": { t: "（尊称的一部分）赞他超绝，指安拉超绝于一切不足", p: "", en: "'glory be to Him' — part of Subhanahu wa Ta'ala" },
+        "subhanallah": { t: "（赞词）赞安拉超绝", p: "", en: "SubhanAllah, 'glory be to Allah'" },
+        "ta'ala": { t: "（尊称的一部分）至高无上", p: "", en: "'the Most High' — part of Subhanahu wa Ta'ala" },
+        "ta'al": { t: "（尊称的一部分）至高（ta'ala 的短形）", p: "", en: "short form of ta'ala, 'the Most High'" },
+        "al-jabbar": { t: "n. 大能者（安拉的尊名之一）", p: "", en: "n. al-Jabbar, a name of Allah, the Compeller" },
+        "al-malik": { t: "n. 君主（安拉的尊名之一）", p: "", en: "n. al-Malik, a name of Allah, the King" },
+        "ar-rahim": { t: "n. 至慈者（安拉的尊名之一）", p: "", en: "n. al-Rahim, a name of Allah, the Most Merciful" },
+        "ar-rahman": { t: "n. 普慈者（安拉的尊名之一）", p: "", en: "n. al-Rahman, a name of Allah, the Most Gracious" },
+        "al-ameen": { t: "n. 忠实者（先知穆罕默德的称号，意为「值得信赖的人」）", p: "", en: "n. al-Amin, the Trustworthy — a title of the Prophet" },
+        "al-sadiq": { t: "n. 诚实者（先知穆罕默德的称号）", p: "", en: "n. al-Sadiq, the Truthful — a title of the Prophet" },
+        "al-aqib": { t: "n. 最后者（先知的称号，意为其后再无先知）", p: "", en: "n. al-Aqib, the Last — a title of the Prophet" },
+        "al-hashir": { t: "n. 集合者（先知的称号，复生日众人将在其前集合）", p: "", en: "n. al-Hashir, the Gatherer — a title of the Prophet" },
+        "al-mahi": { t: "n. 消除者（先知的称号，安拉借他消除不信）", p: "", en: "n. al-Mahi, the Eraser — a title of the Prophet" },
+        "allahumma": { t: "（祈祷呼语）安拉啊", p: "", en: "'O Allah' — the vocative used in supplication" },
+        "al-hamdu": { t: "（赞词的一部分）一切赞颂归于安拉", p: "", en: "'all praise' — belongs to Allah" },
+        "ilaha": { t: "n. 受拜者（清真言「除安拉外绝无真正受拜者」中的词）", p: "", en: "n. a deity — in 'la ilaha illa Allah'" },
+        "kaleemullah": { t: "n. 安拉的对话者（先知穆萨的称号）", p: "", en: "n. Kalimullah, 'the one Allah spoke to' — title of Musa" },
+        "al-mala": { t: "n. 至高集会（天界中天使的集会）", p: "", en: "n. the highest assembly, of the angels" },
+        "al-a'la": { t: "a. 至高的（最高者）", p: "", en: "a. the Most High" },
+        "al-ard": { t: "n. 大地（土地）", p: "", en: "n. the earth, the land" },
+        "al-jaza": { t: "n. 报偿（dar al-jaza 指后世的报偿之所）", p: "", en: "n. recompense — dar al-jaza is the abode of recompense" },
+        "al-kubra": { t: "a. 最大的（阴性最高级，书名中如《大圣训集》）", p: "", en: "a. 'the Greater' (feminine) — in book titles" },
+        "al-dinar": { t: "n. 迪纳尔（古代金币）", p: "", en: "n. the dinar, a gold coin" },
+        "al-dirham": { t: "n. 迪拉姆（古代银币）", p: "", en: "n. the dirham, a silver coin" },
+        "al-dharr": { t: "n. 微尘（原初世界中人类灵魂的微粒）", p: "", en: "n. the tiny particles of the primordial realm" },
+        "al-dhanab": { t: "n. 尾骨（「尾骨尖」指复活时人再生的部位）", p: "", en: "n. the tailbone — in 'ajb al-dhanab" },
+        "ajb": { t: "（词组前半）尾骨尖（『ajb al-dhanab，复活时人将由此再生）", p: "", en: "first part of 'ajb al-dhanab, the tailbone tip" },
+        "nahr": { t: "n. 河流（阿拉伯语词）", p: "", en: "n. a river" },
+        "jahl": { t: "n. 无知（「无知之父」艾布·贾赫勒名中的词）", p: "", en: "n. ignorance — in Abu Jahl, 'father of ignorance'" },
+        "mujrim": { t: "n. 罪人（阿拉伯语词）", p: "", en: "n. a criminal, a sinner" },
+        "mudhammam": { t: "n. 受谴者（古莱什人对先知的谤称，与「穆罕默德」相对）", p: "", en: "n. 'the Blamed' — the Quraysh's insulting name for the Prophet" },
+        "muhaddath": { t: "n. 受启迪者（圣训中对欧麦尔的称呼）", p: "", en: "n. muhaddath, one inspired by Allah — a title of Umar" },
+        "mu'mineen": { t: "n. 信士们（信道者们的复数主格）", p: "", en: "n. the believers (plural of mu'min)" },
+        "shayateen": { t: "n. 魔鬼们（shaytan 的复数）", p: "", en: "n. devils (plural of shaytan)" },
+        "israil": { t: "n. 以色列（先知雅各布的别名；其后裔称以色列的后裔）", p: "", en: "n. Isra'il — Jacob, and his descendants" },
+        "jihad": { t: "n. 吉哈德（阿拉伯语意为「奋斗」，指为安拉之道努力奋斗）", p: "", en: "n. jihad, striving in the path of Allah" },
+        "manaqib": { t: "n. 美德事迹（记载人物品德的传记）", p: "", en: "n. manaqib, accounts of a person's virtues" },
+        "hafidh": { t: "n. 背诵者（能全卷背诵《古兰经》的人）", p: "", en: "n. hafidh, one who has memorized the Qur'an" },
+        "udhiyah": { t: "n. 宰牲（宰牲节所宰的牲畜）", p: "", en: "n. the Eid al-Adha sacrifice" },
+        "amirul": { t: "n. 长官（哈里发尊称「信士们的长官」的前半）", p: "", en: "n. 'commander' — in Amir al-Mu'mineen" },
+        "inni": { t: "（阿拉伯语句首强调词）我确实……", p: "", en: "'indeed I…' — an emphatic Arabic opener" },
+        "asiya": { t: "n. 阿西娅（法老的妻子，信道的妇女典范）", p: "", en: "n. Asiya, wife of Pharaoh, an exemplar of faith" },
+        "fulan": { t: "n. 某人（阿拉伯语中指代未具名的人）", p: "", en: "n. 'so-and-so' — an unnamed person" },
+        "ateed": { t: "n. 阿提德（天使名，与拉给布并称，记录人的言行）", p: "", en: "n. Atid, an angel who records deeds, paired with Raqib" },
+        "raqeebun": { t: "n. 拉给布（天使名，意为监察者，与阿提德并称）", p: "", en: "n. Raqib, an angel who records deeds, paired with Atid" },
+        "abaka": { t: "（阿拉伯语短语词形）你的父亲", p: "", en: "'your father' — an Arabic phrase form" },
+        "abduka": { t: "（阿拉伯语短语词形）你的仆人", p: "", en: "'Your servant' — an Arabic phrase form" },
+        "abligh": { t: "（阿拉伯语短语词形）请转达（给我身后的人）", p: "", en: "'convey to those behind me' — an Arabic phrase form" },
+        "ad'uuka": { t: "（阿拉伯语短语词形）我向你祈求", p: "", en: "'I call upon You' — an Arabic phrase form" },
+        "akhafullah": { t: "（阿拉伯语短语）我敬畏安拉", p: "", en: "'I fear Allah' — an Arabic phrase" },
+        "alayya": { t: "（阿拉伯语短语词形）向我、对我", p: "", en: "'upon me' — an Arabic phrase form" },
+        "annahum": { t: "（阿拉伯语短语词形）他们（将不再返回）", p: "", en: "'that they…' — an Arabic phrase form" },
+        "antum": { t: "（阿拉伯语短语词形）你们", p: "", en: "'you (plural)' — an Arabic phrase form" },
+        "awsini": { t: "（阿拉伯语短语词形）请给我忠告", p: "", en: "'advise me' — an Arabic phrase form" },
+        "bi-khayr": { t: "（阿拉伯语短语词形）美好地（活得好、死得好之语）", p: "", en: "'in goodness' — an Arabic phrase form" },
+        "fa-roohi": { t: "（阿拉伯语短语词形）我的灵魂", p: "", en: "'my soul' — an Arabic phrase form" },
+        "feeha": { t: "（阿拉伯语短语词形）在其中", p: "", en: "'in it' — an Arabic phrase form" },
+        "feeka": { t: "（阿拉伯语短语词形）为了你、在你里面", p: "", en: "'in Your cause' — an Arabic phrase form" },
+        "hadaytana": { t: "（阿拉伯语短语词形）你曾引导我们", p: "", en: "'You guided us' — an Arabic phrase form" },
+        "tahdiya": { t: "（阿拉伯语短语词形）你引导他们", p: "", en: "'You guide them' — an Arabic phrase form" },
+        "ilayha": { t: "（阿拉伯语短语词形）返回它（指今世生活）", p: "", en: "'back to it' — an Arabic phrase form" },
+        "ilayk": { t: "（阿拉伯语短语词形）向你（亲近你）", p: "", en: "'to You' — an Arabic phrase form" },
+        "innahu": { t: "（阿拉伯语短语词形）他已经确实……", p: "", en: "'indeed He has…' — an Arabic phrase form" },
+        "kaifa": { t: "（阿拉伯语短语词形）如何", p: "", en: "'how' — an Arabic phrase form" },
+        "kallamallahu": { t: "（阿拉伯语短语）安拉与他说话", p: "", en: "'Allah spoke to him' — an Arabic phrase" },
+        "kifahan": { t: "（阿拉伯语短语词形）直接面对面地", p: "", en: "'directly, face to face' — an Arabic phrase form" },
+        "namat": { t: "（阿拉伯语短语词形）安睡（愿……不得安睡之语）", p: "", en: "'(may it never) sleep' — an Arabic phrase form" },
+        "nafsak": { t: "（阿拉伯语短语词形）你的灵魂、你自己", p: "", en: "'your soul, yourself' — an Arabic phrase form" },
+        "nabiyyuk": { t: "（阿拉伯语短语词形）你的先知", p: "", en: "'Your Prophet' — an Arabic phrase form" },
+        "rabbuk": { t: "（阿拉伯语短语词形）你的主", p: "", en: "'your Lord' — an Arabic phrase form" },
+        "sawtak": { t: "（阿拉伯语短语词形）你的声音", p: "", en: "'your voice' — an Arabic phrase form" },
+        "sabaqa": { t: "（阿拉伯语短语词形）已预先命定", p: "", en: "'has already decreed' — an Arabic phrase form" },
+        "tariqo": { t: "（阿拉伯语短语词形）途径（亲近你的途径）", p: "", en: "'the way (to You)' — an Arabic phrase form" },
+        "tamanna": { t: "（阿拉伯语短语词形）向我祈求吧", p: "", en: "'ask of Me' — an Arabic phrase form" },
+        "tuhyini": { t: "（阿拉伯语短语词形）你使我复活", p: "", en: "'You bring me back to life' — an Arabic phrase form" },
+        "tujeebunee": { t: "（阿拉伯语短语词形）你应答我", p: "", en: "'You answer me' — an Arabic phrase form" },
+        "tumithum": { t: "（阿拉伯语短语词形）你使他们死去", p: "", en: "'You cause them to die' — an Arabic phrase form" },
+        "u'teek": { t: "（阿拉伯语短语词形）我赐给你", p: "", en: "'I will give you' — an Arabic phrase form" },
+        "uhibbu": { t: "（阿拉伯语短语词形）我喜爱", p: "", en: "'I love' — an Arabic phrase form" },
+        "uqtalu": { t: "（阿拉伯语短语词形）我被杀", p: "", en: "'I am killed' — an Arabic phrase form" },
+        "utruk": { t: "（阿拉伯语短语词形）舍弃（舍弃自我）", p: "", en: "'leave (yourself) behind' — an Arabic phrase form" },
+        "wal-mar'atu": { t: "（阿拉伯语短语词形）那个女人", p: "", en: "'and the woman' — an Arabic phrase form" },
+        "waladathu": { t: "（阿拉伯语短语词形）她生下他（的那日）", p: "", en: "'(the day) she gave birth to him' — an Arabic phrase form" },
+        "ka-yawmi": { t: "（阿拉伯语短语词形）如……的那日", p: "", en: "'like the day…' — an Arabic phrase form" },
+        "yarji'oon": { t: "（阿拉伯语短语词形）他们归回", p: "", en: "'they return' — an Arabic phrase form" },
+        "halin": { t: "（阿拉伯语短语词形）状态", p: "", en: "'a state' — an Arabic phrase form" },
+        "hamadani": { t: "（阿拉伯语短语词形）他赞颂了我", p: "", en: "'he praised Me' — an Arabic phrase form" },
+        "nuqla": { t: "（阿拉伯语短语词形）转移（从一种状态到另一种状态）", p: "", en: "'a transfer' — an Arabic phrase form" },
+        "asma'a": { t: "（阿拉伯语短语词形）我听见", p: "", en: "'I hear' — an Arabic phrase form" },
+        "shaqee": { t: "n. 不幸者（与「幸福者」赛义德相对）", p: "", en: "n. the wretched one (opposite of saeed, the blessed)" },
+        "urwatu": { t: "n. 把手（「最坚固的把手」中的词）", p: "", en: "n. the handhold — in al-'urwah al-wuthqa" },
+        "al-wuthqa": { t: "a. 最坚固的（「最坚固的把手」，《古兰经》语）", p: "", en: "a. 'the most trustworthy' — in the Firm Handhold of the Qur'an" },
+        "uthmani": { t: "a. 奥斯曼版的（指哈里发奥斯曼订定的《古兰经》标准抄本）", p: "", en: "a. Uthmani — of the standard codex compiled under Uthman" },
+        "wal-mi'raj": { t: "n. 登霄（先知夜行之后升入天界，与夜行并称）", p: "", en: "n. the Ascension, paired with the Night Journey" }};
       /* Terms dictvoice carries in neither voice (every term above was
          verified 2026-10-24 by querying both the US type=2 and UK
          type=1 voices with the diacritic-stripped form): there is no
-         verified recording to play, so the card greys its 朗读发音
-         button out and says so in plain words — never a fabricated or
+         verified recording to play, so the card shows no 朗读发音
+         button at all, only the term’s annotation — never a fabricated or
          machine-guessed pronunciation in its place. Keyed by speakKey
          form. Terms dictvoice carries only in the UK voice are marked
          "yd1" in WORD_AUDIO instead and play that recording. Ummah is
          the one addition beyond the "neither voice" rule: its US clip
          exists but is a truncated 0.5 s fragment that never says the
          word (content audit, 2026-10-24) and the UK voice has none,
-         so it is greyed out like the rest. */
+         so its card likewise shows no button at all. */
       var TERM_NO_AUDIO = {"ahya": 1, "akhirah": 1, "ayyub": 1, "barzakh": 1, "bid'ah": 1, "dhikr": 1, "du'a": 1, "fir'aun": 1, "iqamah": 1, "janazah": 1, "jannah": 1, "khabitha": 1, "munkar": 1, "nakir": 1, "rabbana": 1, "rak'ah": 1, "ruku": 1, "sahaba": 1, "sahabah": 1, "salaf": 1, "salawat": 1, "shaytan": 1, "shukr": 1, "sidq": 1, "tahlil": 1, "tahmid": 1, "tasbih": 1, "tawakkul": 1, "tayyiba": 1, "ummah": 1, "uthman": 1};
+
+      /* Whole-corpus no-audio table (audit, 2026-10-24): every
+         tappable surface form the other tables leave uncovered was
+         probed against Youdao dictvoice in BOTH voices (US type=2,
+         UK type=1), at low concurrency with retries; only an HTTP
+         500 — dictvoice’s answer for a word it does not carry —
+         counted as “no recording”. The only two forms whose first
+         probes stayed inconclusive were re-checked directly before
+         the table was frozen — abbas's has a verified UK recording
+         (entered “yd1” in WORD_AUDIO) and abound a verified US one —
+         so neither sits in this table, and nothing here rests on a
+         network hiccup. A form in this table has no verified
+         recording: its card, like a TERM_NO_AUDIO term’s, shows no
+         朗读发音 button at all — only its gloss or curated
+         annotation. Keyed by speakKey form; possessives and
+         hyphenated compounds are included because dictvoice
+         carries neither. */
+      var WORD_NO_AUDIO = {"a'lam": 1,"a'yun": 1,"aaronson": 1,"aaronson's": 1,"abaka": 1,"abbad": 1,"abbad's": 1,"abbads": 1,"abdillah": 1,"abduka": 1,"abligh": 1,"ad'uuka": 1,"ad-din": 1,"ahadan": 1,"ahadith": 1,"ahmad's": 1,"aic's": 1,"ajb": 1,"akhafullah": 1,"al-a'la": 1,"al-albani": 1,"al-ameen": 1,"al-aqib": 1,"al-aqsa": 1,"al-ard": 1,"al-as": 1,"al-awliya": 1,"al-awsat": 1,"al-baghdadi": 1,"al-bakka": 1,"al-bara": 1,"al-barr": 1,"al-barzakh": 1,"al-basri": 1,"al-baydhakh": 1,"al-bayhaqi": 1,"al-bidaya": 1,"al-buruj": 1,"al-bustami": 1,"al-da": 1,"al-dahhak": 1,"al-darimi": 1,"al-dhahabi": 1,"al-dhanab": 1,"al-dharr": 1,"al-din": 1,"al-dinar": 1,"al-dirham": 1,"al-dunya": 1,"al-fajr": 1,"al-fatawa": 1,"al-fatiha": 1,"al-ghazali": 1,"al-ghazali's": 1,"al-hadid": 1,"al-hakam": 1,"al-hakim": 1,"al-hamdu": 1,"al-hashir": 1,"al-imam": 1,"al-iman": 1,"al-imran": 1,"al-isra": 1,"al-isti'ab": 1,"al-ja'afari": 1,"al-jabbar": 1,"al-jami": 1,"al-jarrah's": 1,"al-jawli": 1,"al-jawzi": 1,"al-jawzi's": 1,"al-jaza": 1,"al-jubana": 1,"al-khatib": 1,"al-khims": 1,"al-kubra": 1,"al-mahi": 1,"al-mala": 1,"al-malik": 1,"al-manam": 1,"al-maqdis": 1,"al-maqdisi": 1,"al-masjid": 1,"al-mu'jam": 1,"al-mu'minun": 1,"al-musannaf": 1,"al-mustadrak": 1,"al-muthanna": 1,"al-nu'man": 1,"al-nubala": 1,"al-qayyim": 1,"al-qurtubi": 1,"al-ruh": 1,"al-sadiq": 1,"al-safwa": 1,"al-shafi'i": 1,"al-sunan": 1,"al-tabari": 1,"al-tawadu": 1,"al-thawri": 1,"al-wuthqa": 1,"al-zangi": 1,"al-zuhd": 1,"alayya": 1,"all-zeros": 1,"allahumma": 1,"an-nafs": 1,"an-nasa'i": 1,"annahum": 1,"antum": 1,"appendix's": 1,"aqeeqah": 1,"ar-rahim": 1,"arafah": 1,"arm-wrestle": 1,"as-siddiq": 1,"ash-sham": 1,"asiya": 1,"asma'a": 1,"assaad": 1,"at-tabaqat": 1,"at-tabarani": 1,"at-tabarani's": 1,"at-tadhkirah": 1,"at-tirmidhi": 1,"ateed": 1,"athkar": 1,"awsani": 1,"awsini": 1,"azib": 1,"batch-swaps": 1,"bayesianlinear": 1,"bayt": 1,"believer's": 1,"bi-khayr": 1,"bishr": 1,"blog's": 1,"bptt": 1,"card's": 1,"carroll's": 1,"character-level": 1,"chatgpts": 1,"coarse-graining": 1,"coffee-cup": 1,"coffee-mixing": 1,"coffeeautomaton": 1,"com's": 1,"compare-models": 1,"complexity-entropy": 1,"complexodynamics": 1,"complextropy": 1,"computes": 1,"creator's": 1,"darknesses": 1,"deenuk": 1,"deep-learning": 1,"della's": 1,"dharr": 1,"dhunubihi": 1,"different-colored": 1,"difficult-and-inevitable": 1,"donkey's": 1,"dorar": 1,"du'as": 1,"eduardo's": 1,"encyclopedia's": 1,"episode's": 1,"fa-roohi": 1,"fangshan": 1,"feeha": 1,"feeka": 1,"first-priority": 1,"flint's": 1,"forget-gate": 1,"fulan": 1,"game-winning": 1,"gapped-sine-wave": 1,"ghafir": 1,"ghahramani": 1,"grave's": 1,"grid's": 1,"gzip-compress": 1,"g×g": 1,"hadaytana": 1,"hadeethenc": 1,"hadith's": 1,"hadith-text": 1,"hadithun-nafs": 1,"hafidh": 1,"half-stirred": 1,"halin": 1,"hamadani": 1,"hammuda": 1,"hanbal": 1,"hand-write": 1,"hibban": 1,"hilyat": 1,"hudhafa": 1,"human-set": 1,"hump-shaped": 1,"hundred-plus": 1,"hurayra": 1,"ibrahim's": 1,"ihya": 1,"ilaha": 1,"ilayha": 1,"ilayk": 1,"illiyyun": 1,"inch-sized": 1,"innahu": 1,"israil": 1,"ja'far": 1,"jabbarin": 1,"jabir": 1,"jahl": 1,"jamra": 1,"jian's": 1,"ka-yawmi": 1,"kafan": 1,"kaifa": 1,"kalami": 1,"kaleemullah": 1,"kallamallahu": 1,"kathir": 1,"kathir's": 1,"khokhar": 1,"kifahan": 1,"kingma's": 1,"kishk": 1,"kitab": 1,"krizhevsky": 1,"labbayk": 1,"large-model": 1,"lecture's": 1,"light-cone": 1,"lillah": 1,"low-entropy": 1,"lstms": 1,"majah": 1,"majmu": 1,"manaqib": 1,"marketing-interactive": 1,"mas'ud": 1,"masruq": 1,"mdl's": 1,"mediapost": 1,"melody's": 1,"mid-state": 1,"middle-state": 1,"min-char-rnn": 1,"mishkat": 1,"mu'adh's": 1,"mu'mineen": 1,"mudhammam": 1,"muhaddath": 1,"muhammad's": 1,"mujrim": 1,"munkasiran": 1,"muslim's": 1,"musnad": 1,"mutawasswas": 1,"mutterings": 1,"muzdalifah": 1,"nabiyyuk": 1,"nafsak": 1,"nahr": 1,"namat": 1,"nine-digit": 1,"non-conflicting": 1,"non-interacting": 1,"noodle-stall": 1,"nuh's": 1,"nuqla": 1,"occam's": 1,"oscr": 1,"ouellette": 1,"paper-hungry": 1,"paradise's": 1,"pea-flour": 1,"polynomialmdl": 1,"prequential": 1,"prophet's": 1,"qiyam": 1,"qudsi": 1,"qur'an's": 1,"rabbuk": 1,"rahiba": 1,"rak'ahs": 1,"random-walks": 1,"raqeebun": 1,"rebirths": 1,"regularizedlstm": 1,"repository's": 1,"rnn's": 1,"rnns": 1,"roohi": 1,"row's": 1,"row-majority": 1,"sa'd": 1,"sa'i": 1,"sa'id": 1,"sa'iqun": 1,"sabaqa": 1,"saheeh": 1,"sahih": 1,"sajda": 1,"sariatul": 1,"saudah": 1,"sawtak": 1,"self-attention": 1,"semicolons": 1,"shaddad": 1,"shannon's": 1,"shaqee": 1,"shayateen": 1,"shayba": 1,"shu'ab": 1,"shuhada": 1,"sijjin": 1,"siyar": 1,"sleeper's": 1,"socialpsychology": 1,"softplus": 1,"sophistication-measured": 1,"srebrenica": 1,"su'ayr": 1,"subhanahu": 1,"subhanallah": 1,"suhaib": 1,"sujood": 1,"sumayyah": 1,"sutskever": 1,"ta'al": 1,"ta'ala": 1,"tafsir": 1,"tahdiya": 1,"tahleel": 1,"tahmeed": 1,"tarikh": 1,"tariqo": 1,"tawaf": 1,"taymiyyah": 1,"thabat": 1,"thaniyan": 1,"three-minute": 1,"tiesheng": 1,"trevisan's": 1,"tufayl": 1,"tufayls": 1,"tuhyini": 1,"tujeebunee": 1,"tumithum": 1,"tutorial-style": 1,"u'teek": 1,"udhiyah": 1,"uhibbu": 1,"uhud": 1,"ummah's": 1,"ummuh": 1,"un-kneaded": 1,"un-nafs": 1,"unmindfulness": 1,"uqtalu": 1,"urwatu": 1,"usama's": 1,"utfanu": 1,"uthmani": 1,"utruk": 1,"uyayna": 1,"version's": 1,"wa'l-dawa": 1,"wa'l-khumul": 1,"wa'l-nihaya": 1,"wal-mar'atu": 1,"wal-mi'raj": 1,"waladathu": 1,"warai": 1,"webvtt": 1,"winter's": 1,"word-chain": 1,"word-pieces": 1,"x's": 1,"yahya's": 1,"yaqeen": 1,"yaqeen's": 1,"yarji'oon": 1,"yongnian": 1,"yunus's": 1,"zakariya": 1,"zakariya's": 1,"zhenping": 1,"zhenping's": 1,"zikai": 1};
+
       /* The QURAN_TERMS key a token resolves to, or null. Candidates
          run from the exact surface (diacritics intact, so lām and ṣīt
          match only as written) through the diacritic-stripped form,
@@ -2133,6 +2444,7 @@
           audioCredits: "原文诵读：阿法西 · 英译朗读：Ibrahim Walk",
           audioHl: "读到的词会跟着亮起来",
           backCurrent: "回到当前词",
+          resumePlay: "继续播放",
           home: "返回首页",
           close: "关闭", playPause: "播放或暂停", progress: "播放进度",
           speak: "朗读发音", wordLabel: "单词释义", closeWord: "关闭释义", lemma: "原形：",
@@ -2181,6 +2493,7 @@
           audioCredits: "Arabic recitation: Alafasy · English reading: Ibrahim Walk",
           audioHl: "Words light up as they are read",
           backCurrent: "Back to current word",
+          resumePlay: "Resume",
           home: "Back to home",
           close: "Close", playPause: "Play or pause", progress: "Playback progress",
           speak: "Listen", wordLabel: "Word meaning", closeWord: "Close", lemma: "Base form: ",
@@ -3555,9 +3868,9 @@
          (see speakKey) — through one shared Audio element; if that
          voice fails to load or play it falls back to speechSynthesis
          with the same stripped form, and the button shows its state
-         either way. Terms with no verified recording at all
-         (TERM_NO_AUDIO) get a greyed-out button and a plain note
-         instead of any voice. The word click is intercepted in the capture
+         either way. Words with no verified recording at all
+         (TERM_NO_AUDIO terms, WORD_NO_AUDIO forms) get no button at
+         all — the card carries their Chinese annotation alone. The word click is intercepted in the capture
          phase on the reader body and stopped there, so it can never reach
          the verse block's tap-to-listen toggle; taps anywhere else in the
          verse behave exactly as before. */
@@ -3598,19 +3911,33 @@
       }
       /* Visible states for the 朗读发音 button, so a tap never again
          fails in silence: ready (the word's verified voice), busy
-         (playing), off (a TERM_NO_AUDIO term — greyed, with the
-         wp-noaudio note explaining why), and a brief failure label
-         when neither the recording nor the fallback voice could play. */
+         (playing), a brief failure label when neither the recording
+         nor the fallback voice could play — and off, for a word with
+         no verified recording at all (TERM_NO_AUDIO terms and every
+         WORD_NO_AUDIO form below): the button is not greyed or
+         disabled, it is simply not there, and the card carries the
+         word's Chinese annotation alone (user decision, 2026-10-24 —
+         a button that cannot speak must never be offered). */
       function speakReady() {
         wordPopSpeakBtn.disabled = false;
+        wordPopSpeakBtn.classList.remove("hidden");
         wordPopNoAudio.classList.add("hidden");
         wordPopSpeakLabel.textContent = S().speak;
       }
       function speakOff() {
-        wordPopSpeakBtn.disabled = true;
-        wordPopNoAudio.textContent = S().speakNoAudio;
-        wordPopNoAudio.classList.remove("hidden");
+        wordPopSpeakBtn.classList.add("hidden");
+        wordPopNoAudio.classList.add("hidden");
         wordPopSpeakLabel.textContent = S().speak;
+      }
+      /* True when the tapped surface form has no verified recording:
+         a curated TERM_NO_AUDIO term, or any form the whole-corpus
+         dictvoice audit (2026-10-24, both voices, see WORD_NO_AUDIO)
+         proved unrecorded. The Qur'ān apostrophe form resolves to
+         the same recording speakWord plays, so it is never "off". */
+      function wordNoAudio(surface) {
+        var q = speakKey(surface);
+        if (q === "qur'an") q = "quran";
+        return !!(TERM_NO_AUDIO[q] || WORD_NO_AUDIO[q]);
       }
       function speakBusy() { if (!wordPopSpeakBtn.disabled) wordPopSpeakLabel.textContent = S().speaking; }
       function speakDone() { if (!wordPopSpeakBtn.disabled) wordPopSpeakLabel.textContent = S().speak; }
@@ -3653,7 +3980,7 @@
            corrupters, believed), never the lemma: only edge punctuation
            is stripped from the surface form. */
         popSpeak = popWord.replace(/^[^A-Za-z\u00C0-\u024F\u1E00-\u1EFF]+/, "").replace(/[^A-Za-z\u00C0-\u024F\u1E00-\u1EFF]+$/, "");
-        if (term && TERM_NO_AUDIO[speakKey(popSpeak)]) speakOff(); else speakReady();
+        if (wordNoAudio(popSpeak)) speakOff(); else speakReady();
         wordPopWord.textContent = popWord;
         var base = popWord.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         var form = key !== base ? WORD_FORM[base] : null;
@@ -3731,7 +4058,7 @@
         popWord = span.textContent;
         popLemma = key;
         popSpeak = popWord.replace(/^[^A-Za-z\u00C0-\u024F\u1E00-\u1EFF]+/, "").replace(/[^A-Za-z\u00C0-\u024F\u1E00-\u1EFF]+$/, "");
-        if (term && TERM_NO_AUDIO[speakKey(popSpeak)]) speakOff(); else speakReady();
+        if (wordNoAudio(popSpeak)) speakOff(); else speakReady();
         wordPopWord.textContent = popWord;
         var base = popWord.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         var form = key !== base ? EN_FORM[base] : null;
@@ -3860,8 +4187,8 @@
          play() promise, or a synchronous failure falls back to
          speechSynthesis exactly once for this tap; if that fails too,
          the button shows the failure label instead of staying silent.
-         TERM_NO_AUDIO terms never reach this function: their card
-         disables the button before it can be tapped. */
+         No-audio words never reach this function: their card omits
+         the button, so there is nothing to tap. */
       function speakWord(word) {
         stopSpeech();
         var attempt = wordAttempt;
@@ -3891,13 +4218,58 @@
         try { p = wordAudio.play(); } catch (err) { fallback(); return; }
         if (p && typeof p.catch === "function") p.catch(fallback);
       }
+      /* ---------- resume key （继续播放） ----------
+         Hearing a word pauses the reader's main audio in place; it
+         still never auto-resumes, but the reader no longer has to
+         scroll back to the player to continue: while an audio sits
+         paused by a word lookup, the .resume-fab pill waits in the
+         reader's right-hand column and one tap picks that same audio
+         back up at the frozen position. The pill hides itself the
+         moment the audio plays again by any means, ends, or the
+         reader closes. */
+      var resumeFab = document.getElementById("resumeFab");
+      var resumeTarget = null;
+      var resumeOnPlay = null;
+      function hideResumeFab() {
+        if (resumeTarget && resumeOnPlay) {
+          resumeTarget.removeEventListener("play", resumeOnPlay);
+          resumeTarget.removeEventListener("ended", resumeOnPlay);
+        }
+        resumeTarget = null;
+        resumeOnPlay = null;
+        resumeFab.classList.add("hidden");
+      }
+      function armResumeFab(au) {
+        hideResumeFab();
+        resumeTarget = au;
+        resumeOnPlay = function () { hideResumeFab(); };
+        au.addEventListener("play", resumeOnPlay);
+        au.addEventListener("ended", resumeOnPlay);
+        resumeFab.classList.remove("hidden");
+      }
+      resumeFab.addEventListener("click", function () {
+        var au = resumeTarget;
+        hideResumeFab();
+        if (au) {
+          var p = au.play();
+          if (p && typeof p.catch === "function") p.catch(function () {});
+        }
+      });
+      reader.addEventListener("close", hideResumeFab);
       document.getElementById("wordPopSpeak").addEventListener("click", function () {
         if (!popWord) return;
         /* Both cards behave the same: reading a word aloud first
            pauses whatever audio is playing in the reader — a lesson's
            recitation or an EN article's narration — frozen in place;
-           it never auto-resumes, the reader taps play to continue. */
-        document.getElementById("readerBody").querySelectorAll("audio").forEach(function (a) { a.pause(); });
+           it never auto-resumes. The audio that was playing becomes
+           the resume key's target, so continuing is one tap on the
+           right-hand pill instead of a scroll back to the player. */
+        var wasPlaying = null;
+        document.getElementById("readerBody").querySelectorAll("audio").forEach(function (a) {
+          if (!a.paused && !a.ended && !wasPlaying) wasPlaying = a;
+          a.pause();
+        });
+        if (wasPlaying) armResumeFab(wasPlaying);
         speakWord(popSpeak || popWord);
       });
 
@@ -4016,6 +4388,8 @@
         document.getElementById("wordPop").setAttribute("aria-label", s.wordLabel);
         document.getElementById("wordPopClose").setAttribute("aria-label", s.closeWord);
         document.getElementById("wordPopSpeakLabel").textContent = s.speak;
+        document.getElementById("resumeFabLabel").textContent = s.resumePlay;
+        document.getElementById("resumeFab").setAttribute("aria-label", s.resumePlay);
         document.getElementById("lightboxDl").textContent = s.download;
         document.getElementById("lightboxClose").textContent = s.close;
         buildChips();
