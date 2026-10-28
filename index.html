@@ -212,15 +212,15 @@
          device's publishing serif at a light weight — large, widely
          tracked, white, with a soft feathered shade pooled behind it
          so it stays legible over the bright snow. On load it settles in gently (fade + slight
-         rise + tracking tightening); on scroll the photo drifts
-         slower than the page and the copy fades and shrinks a touch
-         (JS drives --po/--py/--ps and the photo transform; everything
-         stands still under prefers-reduced-motion). */
+         rise + tracking tightening); after that the whole cover is
+         one still piece that scrolls away with the page. There is
+         deliberately no scroll-driven parallax: stepping a
+         full-viewport photo and the wordmark against the native
+         scroll from a scroll handler made the cover shake on
+         phones, so nothing here moves on scroll. */
       .site-hero { position: relative; background: var(--bg); }
       .hero-figure { margin: 0; }
       .hero-photo { display: block; width: 100%; height: 100%; object-fit: cover; }
-      .site-hero.px .hero-photo { will-change: transform; }
-      .hero-copy { opacity: var(--po, 1); transform: translateY(var(--py, 0px)) scale(var(--ps, 1)); }
       .hero-name { font-family: var(--serif-display); }
       @keyframes heroNameIn {
         from { opacity: 0; transform: translateY(16px); letter-spacing: 0.34em; }
@@ -235,7 +235,12 @@
         to { opacity: 1; transform: translateY(0); }
       }
       @media (max-width: 859px) {
-        .site-hero { height: min(78svh, 640px); overflow: hidden; }
+        /* Anchored to vh, never svh/dvh: vh is sized against the
+           large viewport and stays fixed while scrolling, whereas
+           the dynamic viewport units let the cover box itself
+           resize mid-scroll whenever a browser bar shows or hides —
+           one more source of shake, removed with the parallax. */
+        .site-hero { height: min(78vh, 640px); overflow: hidden; }
         .site-hero::before {
           content: ""; position: absolute; z-index: 1;
           left: 0; right: 0; top: 0; height: 46%;
@@ -249,7 +254,7 @@
           top: 45%; left: 0; right: 0;
           padding: 0 28px;
           color: #fff; text-align: center;
-          transform: translateY(calc(-50% + var(--py, 0px))) scale(var(--ps, 1));
+          transform: translateY(-50%);
         }
         /* A soft shade pooled behind the centered wordmark group:
            radial, feathered on every side, gone well before the
@@ -330,7 +335,6 @@
       }
       @media (prefers-reduced-motion: reduce) {
         .hero-name, .hero-tagline, .hero-intro { animation: none; }
-        .hero-copy { opacity: 1; transform: none; }
       }
 
       /* ---------- quote band ---------- */
@@ -4768,32 +4772,15 @@
         revealEls.forEach(function (el) { revealIO.observe(el); });
       }
 
-      /* ---------- cover parallax ----------
-         The photo drifts at ~0.2× the scroll while the wordmark fades
-         and shrinks a touch; back at the top everything restores.
-         Reduced motion: nothing moves. */
-      var heroSec = document.querySelector(".site-hero");
-      var heroPhoto = document.getElementById("heroPhoto");
-      var heroCopy = document.querySelector(".hero-copy");
-      if (heroSec && heroPhoto && !reduceMotion.matches) {
-        heroSec.classList.add("px");
-        var pxTick = false;
-        function heroParallax() {
-          pxTick = false;
-          var r = heroSec.getBoundingClientRect();
-          var h = heroSec.offsetHeight || 1;
-          var p = Math.min(Math.max(-r.top / h, 0), 1);
-          if (r.bottom < 0) return;
-          heroPhoto.style.transform = "translateY(" + (p * h * 0.2).toFixed(1) + "px) scale(1.09)";
-          heroCopy.style.setProperty("--po", (1 - p * 1.5).toFixed(3));
-          heroCopy.style.setProperty("--py", (-p * 26).toFixed(1) + "px");
-          heroCopy.style.setProperty("--ps", (1 - p * 0.05).toFixed(4));
-        }
-        window.addEventListener("scroll", function () {
-          if (!pxTick) { pxTick = true; requestAnimationFrame(heroParallax); }
-        }, { passive: true });
-        heroParallax();
-      }
+      /* ---------- cover: still on scroll ----------
+         No scroll handler touches the cover. An earlier build ran a
+         parallax from here — the photo translated/scaled and the
+         wordmark faded/shrank on every scroll frame — and on phones
+         those main-thread updates stepped against the compositor's
+         native scroll, so the snow cover shook like an earthquake
+         while scrolling up. The cover now scrolls away with the
+         page as one still piece; do not re-add a scroll-driven
+         transform to it. */
       applyLang();
     </script>
     <script>
