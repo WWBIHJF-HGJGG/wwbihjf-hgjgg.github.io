@@ -211,16 +211,37 @@
          The wordmark group sits centered over the snow face, in the
          device's publishing serif at a light weight — large, widely
          tracked, white, with a soft feathered shade pooled behind it
-         so it stays legible over the bright snow. On load it settles in gently (fade + slight
-         rise + tracking tightening); after that the whole cover is
-         one still piece that scrolls away with the page. There is
-         deliberately no scroll-driven parallax: stepping a
-         full-viewport photo and the wordmark against the native
-         scroll from a scroll handler made the cover shake on
-         phones, so nothing here moves on scroll. */
-      .site-hero { position: relative; background: var(--bg); }
+         so it stays legible over the bright snow. On load it settles
+         in gently (fade + slight rise + tracking tightening). As
+         the page scrolls, the cover keeps the gentle parallax it
+         had before — the photo drifts down a touch and eases a few
+         percent larger while the wordmark group rises slightly,
+         shrinks a little and fades out — driven the smooth way this
+         time: the scroll handler only records where the scroll is,
+         a rAF loop eases the values below toward that target, and
+         nothing but transform/opacity moves, through these custom
+         properties, so the compositor does the moving and the
+         cover cannot step against the native scroll the way the
+         old direct-write version did (that stepping, plus the
+         since-removed svh height, was the "earthquake"). With
+         reduced motion the script stays out and the cover is
+         still. */
+      .site-hero {
+        position: relative; background: var(--bg);
+        --photo-y: 0px; --photo-s: 1.1;
+        --copy-y: 0px; --copy-s: 1; --copy-o: 1;
+      }
       .hero-figure { margin: 0; }
-      .hero-photo { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .hero-photo {
+        display: block; width: 100%; height: 100%; object-fit: cover;
+        transform: translate3d(0, var(--photo-y), 0) scale(var(--photo-s));
+        will-change: transform;
+      }
+      .hero-copy-inner {
+        transform: translate3d(0, var(--copy-y), 0) scale(var(--copy-s));
+        opacity: var(--copy-o);
+        will-change: transform, opacity;
+      }
       .hero-name { font-family: var(--serif-display); }
       @keyframes heroNameIn {
         from { opacity: 0; transform: translateY(16px); letter-spacing: 0.34em; }
@@ -239,7 +260,8 @@
            large viewport and stays fixed while scrolling, whereas
            the dynamic viewport units let the cover box itself
            resize mid-scroll whenever a browser bar shows or hides —
-           one more source of shake, removed with the parallax. */
+           one more source of shake, removed along with the old
+           direct-write parallax and not to be reintroduced. */
         .site-hero { height: min(78vh, 640px); overflow: hidden; }
         .site-hero::before {
           content: ""; position: absolute; z-index: 1;
@@ -265,6 +287,7 @@
           content: ""; position: absolute; z-index: -1;
           left: 50%; top: 50%; width: 165%; height: 195%;
           transform: translate(-50%, -50%);
+          opacity: var(--copy-o);
           background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(8, 20, 27, 0.40) 0%, rgba(8, 20, 27, 0.22) 46%, rgba(8, 20, 27, 0) 68%);
           pointer-events: none;
         }
@@ -1321,9 +1344,11 @@
 
     <section class="site-hero" id="top">
       <div class="hero-copy">
-        <h1 class="hero-name serif" id="heroName">知屿</h1>
-        <p class="hero-tagline serif" id="heroTagline">让心灵有所栖息，让思想自由远行。</p>
-        <p class="hero-intro" id="heroIntro">一处安静的阅读空间：读经文，读文章，读人的故事——安顿此心，也望向更远的地方。</p>
+        <div class="hero-copy-inner">
+          <h1 class="hero-name serif" id="heroName">知屿</h1>
+          <p class="hero-tagline serif" id="heroTagline">让心灵有所栖息，让思想自由远行。</p>
+          <p class="hero-intro" id="heroIntro">一处安静的阅读空间：读经文，读文章，读人的故事——安顿此心，也望向更远的地方。</p>
+        </div>
       </div>
       <figure class="hero-figure">
         <img class="hero-photo" id="heroPhoto" src="assets/hero_zhiyu.jpg" alt="雪峰之下，一位独行者正走向群山" fetchpriority="high" decoding="async" />
@@ -4772,15 +4797,67 @@
         revealEls.forEach(function (el) { revealIO.observe(el); });
       }
 
-      /* ---------- cover: still on scroll ----------
-         No scroll handler touches the cover. An earlier build ran a
-         parallax from here — the photo translated/scaled and the
-         wordmark faded/shrank on every scroll frame — and on phones
-         those main-thread updates stepped against the compositor's
-         native scroll, so the snow cover shook like an earthquake
-         while scrolling up. The cover now scrolls away with the
-         page as one still piece; do not re-add a scroll-driven
-         transform to it. */
+      /* ---------- cover parallax, eased ----------
+         The cover motion the reader asked back: as the page
+         scrolls, the snow photo drifts down a little and grows a
+         few percent while the wordmark group rises slightly,
+         shrinks a little and fades away. The first version of this
+         wrote transforms straight from the scroll handler on every
+         event, and on phones those main-thread writes stepped
+         against the compositor's native scroll — the shake that
+         got it removed. This version never writes from the
+         handler: the handler only records the target progress
+         (scrollY over the hero's own height, clamped 0–1), and a
+         rAF loop eases the live value toward it with a ~90ms time
+         constant, writing CSS custom properties that feed nothing
+         but transform and opacity, so the compositor does the
+         moving and the glide stays smooth even when scroll events
+         arrive unevenly. The hero height is cached — it is
+         vh-anchored, so it cannot change mid-scroll — and is
+         refreshed on resize. Reduced motion: the cover is still. */
+      var coverEl = document.querySelector(".site-hero");
+      if (coverEl && !reduceMotion.matches) {
+        var coverH = coverEl.offsetHeight || 1;
+        var coverTarget = 0, coverCur = -1, coverRaf = 0, coverLast = 0;
+        function coverProgress() {
+          var y = window.scrollY || window.pageYOffset || 0;
+          var p = y / coverH;
+          return p < 0 ? 0 : (p > 1 ? 1 : p);
+        }
+        function coverWrite(p) {
+          var fade = p / 0.8; if (fade > 1) fade = 1;
+          coverEl.style.setProperty("--photo-y", (p * coverH * 0.05).toFixed(1) + "px");
+          coverEl.style.setProperty("--photo-s", (1.1 + p * 0.06).toFixed(4));
+          coverEl.style.setProperty("--copy-y", (p * -34).toFixed(1) + "px");
+          coverEl.style.setProperty("--copy-s", (1 - p * 0.05).toFixed(4));
+          coverEl.style.setProperty("--copy-o", (1 - fade).toFixed(3));
+        }
+        function coverFrame(now) {
+          var dt = coverLast ? Math.min(64, now - coverLast) : 16;
+          coverLast = now;
+          var k = 1 - Math.exp(-dt / 90);
+          coverCur += (coverTarget - coverCur) * k;
+          if (Math.abs(coverTarget - coverCur) < 0.0006) {
+            coverCur = coverTarget;
+            coverWrite(coverCur);
+            coverRaf = 0; coverLast = 0;
+            return;
+          }
+          coverWrite(coverCur);
+          coverRaf = requestAnimationFrame(coverFrame);
+        }
+        function coverKick() {
+          coverTarget = coverProgress();
+          if (coverCur < 0) { coverCur = coverTarget; coverWrite(coverCur); return; }
+          if (!coverRaf && coverCur !== coverTarget) coverRaf = requestAnimationFrame(coverFrame);
+        }
+        window.addEventListener("scroll", coverKick, { passive: true, capture: true });
+        window.addEventListener("resize", function () {
+          coverH = coverEl.offsetHeight || 1;
+          coverKick();
+        }, { passive: true });
+        coverKick();
+      }
       applyLang();
     </script>
     <script>
