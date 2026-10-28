@@ -4,7 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light" />
-    <link rel="icon" href="data:," />
+    <meta name="theme-color" content="#273c36" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="知屿" />
+    <link rel="manifest" href="assets/manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="assets/icon-192.png" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
     <title>知屿 — 让心灵有所栖息</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -694,6 +701,40 @@
       }
       .reader-close:active { transform: scale(0.94); }
       .reader-body { padding: 22px 24px 44px; overflow-y: auto; }
+      /* Immersive reading lock: the page and the reader scroll
+         vertically only. Horizontal overflow is clipped everywhere,
+         the reader body accepts vertical pans (and pinch zoom) but
+         no horizontal pan, and scroll never chains out of the reader
+         to the host webview — a slightly diagonal reading swipe must
+         not turn into the host app's back gesture. */
+      html, body { overflow-x: hidden; overflow-x: clip; }
+      dialog.reader { overscroll-behavior: none; }
+      .reader-body {
+        overflow-x: hidden;
+        touch-action: pan-y pinch-zoom;
+        overscroll-behavior-y: contain;
+      }
+      .reader-body .full-text { overflow-wrap: break-word; }
+      .reader-body img, .reader-body audio, .reader-body video { max-width: 100%; }
+      /* "Swipe again to exit" hint: shown at the bottom of the
+         reader after a first intercepted back-swipe (see the exit
+         guard script); a second swipe within 2s really leaves. */
+      .exit-hint {
+        position: fixed; left: 50%; z-index: 60;
+        bottom: calc(22px + env(safe-area-inset-bottom));
+        transform: translateX(-50%) translateY(10px);
+        background: var(--dark); color: var(--paper);
+        font-family: var(--sans); font-size: 14px; line-height: 1;
+        white-space: nowrap;
+        padding: 12px 22px; border-radius: 999px;
+        box-shadow: var(--shadow);
+        opacity: 0; visibility: hidden; pointer-events: none;
+        transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+      }
+      .exit-hint.on {
+        opacity: 1; visibility: visible;
+        transform: translateX(-50%) translateY(0);
+      }
       /* The entry's card becomes a capped-height header in the reader:
          full width, cover-cropped around the card's heart (center 45%),
          so the opening lines of the text are always on the first screen
@@ -1340,6 +1381,7 @@
         <button class="reader-close" id="readerClose" aria-label="关闭">✕</button>
       </div>
       <div class="reader-body" id="readerBody"></div>
+      <div class="exit-hint" id="exitHint" role="status">再滑一次退出阅读</div>
       <div class="word-pop hidden" id="wordPop" role="dialog" aria-label="单词释义">
         <button class="wp-close" id="wordPopClose" type="button" aria-label="关闭释义">✕</button>
         <div><span class="wp-word" id="wordPopWord"></span><span class="wp-phon" id="wordPopPhon"></span></div>
@@ -4753,6 +4795,86 @@
         heroParallax();
       }
       applyLang();
+    </script>
+    <script>
+      /* ---------- immersive exit guard (reader only) ----------
+         The host webview's edge swipe (WeChat especially) navigates
+         history back and throws the reader out of the site on a
+         single accidental swipe; a page cannot switch that gesture
+         off. While the reader is open we therefore keep one sentinel
+         history entry on the stack. The first back navigation only
+         pops the sentinel: the reader stays, a bottom hint shows
+         "再滑一次退出阅读", and the sentinel is re-armed. A second
+         back navigation within 2s is let through for real (one more
+         history.back() past the page's own entry). Closing the
+         reader by any normal path (✕, backdrop, Esc, home key)
+         silently consumes the sentinel so list-page behaviour is
+         unchanged. If history is unavailable (sandboxed preview),
+         everything degrades to the previous behaviour. */
+      (function () {
+        "use strict";
+        var reader = document.getElementById("reader");
+        var hint = document.getElementById("exitHint");
+        if (!reader || !hint || !window.history || !("pushState" in window.history)) return;
+        var guardOn = false;   /* sentinel entry currently on the stack */
+        var armedAt = 0;       /* when the first swipe was intercepted */
+        var suppress = false;  /* ignore the popstate from our own cleanup */
+        var hintTimer = 0;
+
+        function showHint() {
+          hint.classList.add("on");
+          window.clearTimeout(hintTimer);
+          hintTimer = window.setTimeout(hideHint, 2000);
+        }
+        function hideHint() {
+          window.clearTimeout(hintTimer);
+          hint.classList.remove("on");
+        }
+        function pushGuard() {
+          if (guardOn) return;
+          try {
+            history.pushState({ zhiyuReaderGuard: 1 }, "");
+            guardOn = true;
+          } catch (err) { /* history blocked: guard stays off */ }
+        }
+        function dropGuard() {
+          if (!guardOn) return;
+          guardOn = false;
+          suppress = true;
+          try { history.back(); } catch (err) { suppress = false; }
+        }
+
+        /* showModal()/close() flip the dialog's open attribute. */
+        new MutationObserver(function () {
+          if (reader.hasAttribute("open")) {
+            armedAt = 0;
+            pushGuard();
+          } else {
+            armedAt = 0;
+            hideHint();
+            dropGuard();
+          }
+        }).observe(reader, { attributes: true, attributeFilter: ["open"] });
+
+        window.addEventListener("popstate", function () {
+          if (suppress) { suppress = false; return; }
+          if (!guardOn) return; /* not our sentinel popping */
+          guardOn = false;      /* the swipe consumed the sentinel */
+          if (!reader.hasAttribute("open")) return;
+          var now = Date.now();
+          if (armedAt && now - armedAt <= 2000) {
+            /* Second swipe inside the window: really leave. */
+            armedAt = 0;
+            hideHint();
+            try { history.back(); } catch (err) {}
+          } else {
+            /* First swipe: stay in the reader, warn, re-arm. */
+            armedAt = now;
+            pushGuard();
+            showHint();
+          }
+        });
+      })();
     </script>
   </body>
 </html>
