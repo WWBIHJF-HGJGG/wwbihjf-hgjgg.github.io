@@ -1,10 +1,31 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="day">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#273c36" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" id="themeColorMeta" content="#273c36" />
+    <script>
+      /* Day / night, decided before first paint so a night reader
+         never gets a white flash: a stored manual choice
+         (localStorage "zhiyu-theme") always wins; until the reader
+         has chosen once, the system setting decides. The main
+         script later reads this same attribute as the live state.
+         STANDING RULE for rebuilds: keep this script, the
+         html[data-theme="night"] palette, the three 白天/夜晚
+         switches (site header, reader head, audio-view head) and
+         the "zhiyu-theme" key — a rebuild that drops any of them
+         drops the night mode with it. */
+      (function () {
+        var t = null;
+        try { t = localStorage.getItem("zhiyu-theme"); } catch (err) {}
+        if (t !== "day" && t !== "night") {
+          t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "night" : "day";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+        if (t === "night") document.documentElement.style.backgroundColor = "#171b18";
+      })();
+    </script>
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -55,6 +76,75 @@
         /* UI sans: functional text and every figure that lives in it. */
         --sans: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
         --shadow: 0 1px 2px rgba(35, 49, 44, 0.05), 0 10px 30px rgba(35, 49, 44, 0.06);
+        /* Surfaces that must follow the day/night switch rather than
+           a fixed light value. --on-dark is the text colour that sits
+           ON the deep-pine --dark ground (buttons, pills, the player
+           key): warm paper by day, warm ivory by night — never
+           --paper, which itself turns dark at night. */
+        --on-dark: #fffdf8;
+        --article-ink: #26332c;
+        --tr-ink: #3c4a41;
+        --link: #7a5e38;
+        --glass: rgba(255, 253, 248, 0.78);
+        --player-bg: rgba(255, 255, 255, 0.45);
+        --fab-bg: rgba(255, 253, 248, 0.66);
+        --fab-line: rgba(35, 49, 44, 0.16);
+        --track-rest: rgba(35, 49, 44, 0.14);
+        --img-dim: 1;
+      }
+      /* ---------- night: warm pine-charcoal ----------
+         The researched night palette (Kindle / Apple Books / Google
+         Play Books / Kobo, checked against WCAG AA): never pure
+         black, never pure white — a warm deep pine-charcoal ground
+         (#171b18), card surface #222a25, the brand pine #273c36 as
+         the raised layer; body text warm ivory #e8e4d8 (about 12:1
+         on the ground, inside the comfortable 12–15:1 band, well
+         clear of the glaring 21:1 of black-on-white reversed);
+         secondary text #aeb5ac; gold lifted to #c9a876. The Qur'an
+         tricolor is re-tuned, not inverted: Arabic #ede8dc, English
+         #d6d2c4, Chinese lifted and softened to #e8a183 (the day
+         #d97757 is too dark and too saturated on a dark ground).
+         The reading cursor keeps its shape — a pale gold wash plus
+         a gold edge (--gold-wash / --gold-edge above). Photographs
+         are never inverted, only dimmed to 0.88 via --img-dim.
+         Day above stays exactly as it was. */
+      html[data-theme="night"] {
+        color-scheme: dark;
+        --bg: #171b18;
+        --paper: #222a25;
+        --ink: #e8e4d8;
+        --muted: #aeb5ac;
+        --line: #3a443d;
+        --accent: #c9a876;
+        --dark: #273c36;
+        --soft: #2a332d;
+        --gold-wash: rgba(201, 168, 118, 0.30);
+        --gold-edge: #c9a876;
+        --q-ar: #ede8dc;
+        --q-en: #d6d2c4;
+        --q-zh: #e8a183;
+        --q-num: #c9a876;
+        --q-word-line: rgba(232, 228, 216, 0.40);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.40);
+        --on-dark: #e8e4d8;
+        --article-ink: #e8e4d8;
+        --tr-ink: #ddd8c9;
+        --link: #d9b98a;
+        --glass: rgba(34, 42, 37, 0.85);
+        --player-bg: rgba(232, 228, 216, 0.08);
+        --fab-bg: rgba(34, 42, 37, 0.72);
+        --fab-line: rgba(232, 228, 216, 0.22);
+        --track-rest: rgba(232, 228, 216, 0.20);
+        --img-dim: 0.88;
+      }
+      /* On wide screens the cover tagline sits on the page ground
+         itself (not on the photograph), so its day colour — the
+         deep pine --dark — would vanish into the night ground;
+         at night it takes the ivory body colour instead. (On
+         phones the tagline is white over the photo in both modes
+         and needs nothing.) */
+      @media (min-width: 860px) {
+        html[data-theme="night"] .hero-tagline { color: var(--ink); }
       }
       * { box-sizing: border-box; }
       /* No CSS scroll-behavior: in-page navigation is animated by
@@ -127,6 +217,7 @@
       .brand-mark img {
         display: block; width: 100%; height: 100%;
         object-fit: cover; object-position: 50% 18%;
+        filter: brightness(var(--img-dim));
       }
       .brand-mark:active { transform: scale(0.94); }
       .brand-mark:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -194,7 +285,29 @@
         padding: 5px 13px; border-radius: 999px; white-space: nowrap;
         transition: background-color 0.18s ease, color 0.18s ease;
       }
-      .lang-switch button[aria-pressed="true"] { background: var(--dark); color: var(--paper); }
+      .lang-switch button[aria-pressed="true"] { background: var(--dark); color: var(--on-dark); }
+      /* Day / night switch: the same segmented pill as the language
+         switch, present in the site header, the reader head and the
+         audio-view head; all three share one state (see the theme
+         script) and flip the whole page at once, no reload. Wording
+         is 白天 / 夜晚 — never 「主题」, which is the content
+         category menu under the brand mark. */
+      .mode-switch {
+        display: flex; align-items: center;
+        border: 1px solid var(--line); border-radius: 999px;
+        background: var(--paper); padding: 3px;
+      }
+      .mode-switch button {
+        appearance: none; cursor: pointer; border: 0; background: transparent;
+        font: inherit; font-size: 13px; font-weight: 600; color: var(--muted);
+        padding: 5px 13px; border-radius: 999px; white-space: nowrap;
+        transition: background-color 0.18s ease, color 0.18s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .mode-switch button[aria-pressed="true"] { background: var(--dark); color: var(--on-dark); }
+      .mode-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .reader-head .mode-switch { flex: none; align-self: center; }
+      .reader-head .mode-switch button { padding: 5px 10px; font-size: 12.5px; }
       @media (max-width: 560px) {
         .head-in { padding: 12px 16px; }
         .brand-mark { width: 34px; height: 34px; }
@@ -235,6 +348,7 @@
       .hero-photo {
         display: block; width: 100%; height: 100%; object-fit: cover;
         transform: translate3d(0, var(--photo-y), 0) scale(var(--photo-s));
+        filter: brightness(var(--img-dim));
         will-change: transform;
       }
       .hero-copy-inner {
@@ -403,6 +517,7 @@
       .nav-panel-img {
         display: block; width: 100%; height: 100%;
         object-fit: cover; object-position: 50% 30%;
+        filter: brightness(var(--img-dim));
         animation: navSettle 2.8s cubic-bezier(0.22, 0.61, 0.21, 1) both;
       }
       /* The photograph settles in with one slow, quiet zoom on load —
@@ -533,6 +648,7 @@
         display: block; width: 100%;
         height: clamp(230px, 40vw, 350px);
         object-fit: cover;
+        filter: brightness(var(--img-dim));
         background: var(--soft);
       }
       .hero-shade {
@@ -545,7 +661,7 @@
       .hero-tags { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
       .hero-new {
         font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em;
-        color: var(--paper); background: var(--dark);
+        color: var(--on-dark); background: var(--dark);
         padding: 3px 11px; border-radius: 999px;
       }
       .hero-card.has-cover .tag { background: rgba(255, 253, 248, 0.92); color: var(--dark); }
@@ -597,6 +713,7 @@
       .entry-thumb {
         display: block; width: 100%; height: 150px;
         object-fit: cover;
+        filter: brightness(var(--img-dim));
         border-radius: 4px;
         border: 1px solid var(--line);
         background: var(--soft);
@@ -636,7 +753,7 @@
         background: var(--paper); color: var(--ink);
         transition: background-color 0.18s ease, transform 0.12s ease;
       }
-      .btn.primary { background: var(--dark); border-color: transparent; color: var(--paper); }
+      .btn.primary { background: var(--dark); border-color: transparent; color: var(--on-dark); }
       .btn:active { transform: translateY(1px); }
 
       .empty-note { color: var(--muted); font-size: 14px; margin: 10px 0 0; }
@@ -750,7 +867,7 @@
         position: fixed; left: 50%; z-index: 60;
         bottom: calc(22px + env(safe-area-inset-bottom));
         transform: translateX(-50%) translateY(10px);
-        background: var(--dark); color: var(--paper);
+        background: var(--dark); color: var(--on-dark);
         font-family: var(--sans); font-size: 14px; line-height: 1;
         white-space: nowrap;
         padding: 12px 22px; border-radius: 999px;
@@ -771,6 +888,7 @@
         display: block; width: 100%; height: 34vh; max-height: 34vh;
         margin: 0 0 24px;
         object-fit: cover; object-position: center 45%;
+        filter: brightness(var(--img-dim));
         border-radius: 4px; border: 1px solid var(--line);
         background: var(--soft);
         cursor: pointer;
@@ -783,7 +901,7 @@
          solid block. Caption is short left-aligned lines, never a
          paragraph: title / lesson name / credits / highlight note. */
       .audio-box {
-        background: rgba(255, 253, 248, 0.78);
+        background: var(--glass);
         -webkit-backdrop-filter: blur(16px) saturate(1.25);
         backdrop-filter: blur(16px) saturate(1.25);
         border: 1px solid var(--line);
@@ -808,7 +926,7 @@
       .native-audio { display: none; }
       .player {
         display: flex; align-items: center; gap: 12px;
-        background: rgba(255, 255, 255, 0.45);
+        background: var(--player-bg);
         border: 1px solid var(--line);
         border-radius: 999px;
         padding: 5px 12px 5px 5px;
@@ -816,7 +934,7 @@
       .player-btn {
         flex: none; appearance: none; cursor: pointer;
         width: 42px; height: 42px; border-radius: 50%;
-        border: 0; background: var(--dark); color: var(--paper);
+        border: 0; background: var(--dark); color: var(--on-dark);
         display: flex; align-items: center; justify-content: center;
         transition: transform 0.12s ease;
       }
@@ -840,12 +958,12 @@
       .player-bar::-webkit-slider-thumb {
         -webkit-appearance: none; appearance: none;
         width: 15px; height: 15px; border-radius: 50%;
-        background: var(--paper); border: 1px solid rgba(35, 49, 44, 0.35);
+        background: var(--on-dark); border: 1px solid rgba(35, 49, 44, 0.35);
         box-shadow: 0 1px 4px rgba(35, 49, 44, 0.25);
       }
       .player-bar::-moz-range-thumb {
         width: 15px; height: 15px; border-radius: 50%;
-        background: var(--paper); border: 1px solid rgba(35, 49, 44, 0.35);
+        background: var(--on-dark); border: 1px solid rgba(35, 49, 44, 0.35);
         box-shadow: 0 1px 4px rgba(35, 49, 44, 0.25);
       }
       /* "Back to current" pill: floats at the reader's lower right
@@ -859,7 +977,7 @@
         bottom: calc(max(16px, env(safe-area-inset-bottom)) + 58px);
         appearance: none; cursor: pointer;
         font: inherit; font-size: 13.5px; font-weight: 600;
-        color: var(--paper); background: var(--dark);
+        color: var(--on-dark); background: var(--dark);
         border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 999px;
         padding: 9px 16px;
         box-shadow: 0 10px 26px rgba(35, 49, 44, 0.30);
@@ -879,7 +997,7 @@
         display: flex; align-items: center; gap: 7px;
         appearance: none; cursor: pointer;
         font: inherit; font-size: 13.5px; font-weight: 600;
-        color: var(--paper); background: var(--dark);
+        color: var(--on-dark); background: var(--dark);
         border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 999px;
         padding: 10px 16px 10px 13px;
         box-shadow: 0 10px 26px rgba(35, 49, 44, 0.30);
@@ -904,10 +1022,10 @@
         display: flex; align-items: center; justify-content: center;
         appearance: none; cursor: pointer;
         color: var(--ink);
-        background: rgba(255, 253, 248, 0.66);
+        background: var(--fab-bg);
         -webkit-backdrop-filter: blur(14px) saturate(1.3);
         backdrop-filter: blur(14px) saturate(1.3);
-        border: 1px solid rgba(35, 49, 44, 0.16);
+        border: 1px solid var(--fab-line);
         box-shadow: 0 8px 22px rgba(35, 49, 44, 0.14);
         opacity: 0; visibility: hidden; transform: translateY(4px);
         transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s linear 0.25s;
@@ -928,7 +1046,7 @@
       .audio-view-body .audio-item { margin-top: 18px; }
       .full-text { font-size: 16.5px; line-height: 1.95; }
       .full-text p { margin: 0 0 1em; overflow-wrap: anywhere; }
-      .full-text a { color: #7a5e38; overflow-wrap: anywhere; }
+      .full-text a { color: var(--link); overflow-wrap: anywhere; }
       .full-text [dir="rtl"] { font-size: 1.12em; line-height: 2.1; }
 
       /* ---------- article reading comfort (essays & stories) ----------
@@ -945,7 +1063,7 @@
         font-size: 17.5px;
         line-height: 1.95;
         letter-spacing: 0.015em;
-        color: #26332c;
+        color: var(--article-ink);
       }
       .full-text.article p { margin: 0 0 1em; text-wrap: pretty; }
       @media (min-width: 760px) {
@@ -1148,7 +1266,7 @@
         border-left: 2px solid var(--gold-edge);
         border-radius: 0 6px 6px 0;
         padding: 13px 16px 5px;
-        color: #3c4a41;
+        color: var(--tr-ink);
       }
       .full-text.article .tr-panel p { margin: 0 0 0.8em; }
       .full-text.article .tr-panel .ft-essence {
@@ -1161,7 +1279,7 @@
         appearance: none; cursor: pointer;
         display: inline-flex; align-items: center; gap: 8px;
         font: inherit; font-size: 14.5px; font-weight: 600; letter-spacing: 0.02em;
-        color: var(--paper); background: var(--dark);
+        color: var(--on-dark); background: var(--dark);
         border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 999px;
         padding: 10px 20px 10px 16px;
         box-shadow: 0 10px 24px rgba(35, 49, 44, 0.20);
@@ -1171,7 +1289,7 @@
       .listen-btn svg { width: 15px; height: 15px; fill: currentColor; flex: none; }
       .listen-box {
         margin-top: 12px;
-        background: rgba(255, 253, 248, 0.78);
+        background: var(--glass);
         -webkit-backdrop-filter: blur(16px) saturate(1.25);
         backdrop-filter: blur(16px) saturate(1.25);
         border: 1px solid var(--line);
@@ -1255,7 +1373,7 @@
         appearance: none; cursor: pointer; margin-top: 10px;
         display: inline-flex; align-items: center; gap: 6px;
         font: inherit; font-size: 13.5px; font-weight: 600;
-        color: var(--paper); background: var(--dark);
+        color: var(--on-dark); background: var(--dark);
         border: 0; border-radius: 999px;
         padding: 7px 14px 7px 12px;
       }
@@ -1338,6 +1456,10 @@
             <button type="button" id="langZh" aria-pressed="true">中文</button>
             <button type="button" id="langEn" aria-pressed="false">EN</button>
           </div>
+          <div class="mode-switch" role="group" aria-label="白天 / 夜晚">
+            <button type="button" class="mode-btn" data-mode="day" aria-pressed="true">白天</button>
+            <button type="button" class="mode-btn" data-mode="night" aria-pressed="false">夜晚</button>
+          </div>
         </div>
       </div>
     </header>
@@ -1407,6 +1529,10 @@
           <div class="entry-top" id="readerMeta"></div>
           <h2 id="readerTitle"></h2>
         </div>
+        <div class="mode-switch" role="group" aria-label="白天 / 夜晚">
+          <button type="button" class="mode-btn" data-mode="day" aria-pressed="true">白天</button>
+          <button type="button" class="mode-btn" data-mode="night" aria-pressed="false">夜晚</button>
+        </div>
         <button class="reader-close" id="readerClose" aria-label="关闭">✕</button>
       </div>
       <div class="reader-body" id="readerBody"></div>
@@ -1436,6 +1562,10 @@
         <div class="meta">
           <div class="entry-top" id="audioViewMeta"></div>
           <h2 id="audioViewTitle"></h2>
+        </div>
+        <div class="mode-switch" role="group" aria-label="白天 / 夜晚">
+          <button type="button" class="mode-btn" data-mode="day" aria-pressed="true">白天</button>
+          <button type="button" class="mode-btn" data-mode="night" aria-pressed="false">夜晚</button>
         </div>
         <button class="reader-close" id="audioViewClose" aria-label="关闭">✕</button>
       </div>
@@ -2634,6 +2764,7 @@
           types: { all: "全部", morning: "晨读", noon: "午读", night: "夜读", paper: "30u30论文", turing: "图灵之路", quran: "古兰经学习", rabbana: "祈祷词" },
           menuCap: "按主题浏览",
           markLabel: "选择主题",
+          modeDay: "白天", modeNight: "夜晚", modeLabel: "白天 / 夜晚",
           count: function (n) { return n + " 条"; },
           fullChars: function (n) { return "全文 " + n + " 字"; },
           read: "读全文", listen: "听音频", listenArticle: "聆听文章", viewCard: "看卡片",
@@ -2683,6 +2814,7 @@
           types: { all: "All", morning: "Morning", noon: "Noon", night: "Night", paper: "30u30 Papers", turing: "Turing Road", quran: "Qur'an Study", rabbana: "Supplications" },
           menuCap: "Browse by theme",
           markLabel: "Choose a theme",
+          modeDay: "Day", modeNight: "Night", modeLabel: "Day / Night",
           count: function (n) { return n + (n === 1 ? " entry" : " entries"); },
           fullChars: function (n) { return "Full text · " + n + " characters"; },
           read: "Read", listen: "Listen", listenArticle: "Listen to Article", viewCard: "Card",
@@ -3114,7 +3246,7 @@
           }
           var p = d > 0 ? (t / d) * 100 : 0;
           if (document.activeElement !== bar) bar.value = d > 0 ? Math.round((t / d) * 1000) : 0;
-          bar.style.background = "linear-gradient(90deg, var(--accent) " + p + "%, rgba(35,49,44,0.14) " + p + "%) center / 100% 6px no-repeat";
+          bar.style.background = "linear-gradient(90deg, var(--accent) " + p + "%, var(--track-rest) " + p + "%) center / 100% 6px no-repeat";
           cur.textContent = fmtPlayerTime(t);
           dur.textContent = fmtPlayerTime(d);
           btn.innerHTML = (!au.paused && !au.ended) ? PLAYER_PAUSE : PLAYER_PLAY;
@@ -4602,6 +4734,10 @@
         document.getElementById("pageFoot").textContent = s.foot(dates[0]);
         document.getElementById("langZh").setAttribute("aria-pressed", LANG === "zh" ? "true" : "false");
         document.getElementById("langEn").setAttribute("aria-pressed", LANG === "en" ? "true" : "false");
+        document.querySelectorAll(".mode-switch").forEach(function (g) { g.setAttribute("aria-label", s.modeLabel); });
+        document.querySelectorAll(".mode-btn").forEach(function (b) {
+          b.textContent = b.getAttribute("data-mode") === "night" ? s.modeNight : s.modeDay;
+        });
         document.getElementById("reader").setAttribute("aria-label", s.readerLabel);
         document.getElementById("audioView").setAttribute("aria-label", s.audioViewLabel);
         document.getElementById("readerClose").setAttribute("aria-label", s.close);
@@ -4628,6 +4764,51 @@
       }
       document.getElementById("langZh").addEventListener("click", function () { setLang("zh"); });
       document.getElementById("langEn").addEventListener("click", function () { setLang("en"); });
+
+      /* ---------- day / night switch ----------
+         One shared state for the three 白天/夜晚 switches (site
+         header, reader head, audio-view head): tapping any of them
+         flips the whole page at once — html[data-theme] swaps the
+         palette variables, no reload — and every switch re-marks
+         itself. The head script already resolved the initial theme
+         before first paint (stored manual choice under
+         "zhiyu-theme" wins; until the reader has chosen once, the
+         system setting decides), so this block simply adopts that
+         attribute as the live state. A manual tap is stored and
+         wins from then on; while no stored choice exists, a system
+         flip still flows through. STANDING RULE for rebuilds: keep
+         this block, the head script, the night palette and all
+         three switches together. */
+      var THEME = document.documentElement.getAttribute("data-theme") === "night" ? "night" : "day";
+      function applyTheme() {
+        document.documentElement.setAttribute("data-theme", THEME);
+        document.documentElement.style.backgroundColor = THEME === "night" ? "#171b18" : "";
+        document.querySelectorAll(".mode-btn").forEach(function (b) {
+          b.setAttribute("aria-pressed", b.getAttribute("data-mode") === THEME ? "true" : "false");
+        });
+        var mc = document.getElementById("themeColorMeta");
+        if (mc) mc.setAttribute("content", THEME === "night" ? "#171b18" : "#273c36");
+      }
+      function setTheme(t) {
+        if (t !== "day" && t !== "night") return;
+        THEME = t;
+        try { localStorage.setItem("zhiyu-theme", t); } catch (err) {}
+        applyTheme();
+      }
+      document.querySelectorAll(".mode-btn").forEach(function (b) {
+        b.addEventListener("click", function () { setTheme(b.getAttribute("data-mode")); });
+      });
+      var sysThemeMq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+      if (sysThemeMq && sysThemeMq.addEventListener) {
+        sysThemeMq.addEventListener("change", function (ev) {
+          var stored = null;
+          try { stored = localStorage.getItem("zhiyu-theme"); } catch (err) {}
+          if (stored === "day" || stored === "night") return; /* manual choice wins */
+          THEME = ev.matches ? "night" : "day";
+          applyTheme();
+        });
+      }
+      applyTheme();
 
       /* ---------- photo navigation panel ----------
          The badlands photograph backs the whole navigation block:
