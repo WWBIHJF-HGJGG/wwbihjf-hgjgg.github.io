@@ -755,6 +755,49 @@
       }
       .btn.primary { background: var(--dark); border-color: transparent; color: var(--on-dark); }
       .btn:active { transform: translateY(1px); }
+      /* One-tap plain-text copy: the same pill as every other action,
+         with a small copy glyph before the label. On the cover card it
+         sits under the meta line, left-aligned; over a photograph it
+         takes the same frosted paper as the card's tag so it stays
+         legible, on a plain card it keeps the outline style. */
+      .btn.copy-btn { display: inline-flex; align-items: center; gap: 7px; }
+      .btn.copy-btn svg { flex: none; display: block; }
+      .hero-copy { margin-top: 14px; align-self: flex-start; }
+      .hero-card.has-cover .hero-copy {
+        background: rgba(255, 253, 248, 0.92); color: var(--dark); border-color: transparent;
+      }
+      /* Reader toolbar: a slim fixed row under the reader head (it
+         lives outside the scrolling body, so the copy key is always
+         within reach while reading), right-aligned, hairline below. */
+      .reader-tools {
+        flex: none;
+        display: flex; justify-content: flex-end; align-items: center;
+        padding: 10px 24px;
+        background: var(--paper);
+        border-bottom: 1px solid var(--line);
+      }
+      .reader-tools .btn { padding: 7px 15px; font-size: 13.5px; }
+      /* Copy feedback toast: the exit-hint's dark pill, reused as a
+         page-level status. The script moves this one element into
+         the reader dialog while it is open (a modal's top layer
+         would otherwise cover it), so it reads the same everywhere. */
+      .copy-toast {
+        position: fixed; left: 50%; z-index: 90;
+        bottom: calc(24px + env(safe-area-inset-bottom));
+        transform: translateX(-50%) translateY(10px);
+        background: var(--dark); color: var(--on-dark);
+        font-family: var(--sans); font-size: 14px; line-height: 1;
+        white-space: nowrap; max-width: calc(100vw - 32px);
+        overflow: hidden; text-overflow: ellipsis;
+        padding: 12px 22px; border-radius: 999px;
+        box-shadow: var(--shadow);
+        opacity: 0; visibility: hidden; pointer-events: none;
+        transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+      }
+      .copy-toast.on {
+        opacity: 1; visibility: visible;
+        transform: translateX(-50%) translateY(0);
+      }
 
       .empty-note { color: var(--muted); font-size: 14px; margin: 10px 0 0; }
 
@@ -1535,6 +1578,12 @@
         </div>
         <button class="reader-close" id="readerClose" aria-label="关闭">✕</button>
       </div>
+      <div class="reader-tools">
+        <button class="btn primary copy-btn" id="readerCopy" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span id="readerCopyLabel" data-copy-label>复制全文</span>
+        </button>
+      </div>
       <div class="reader-body" id="readerBody"></div>
       <div class="exit-hint" id="exitHint" role="status">再滑一次退出阅读</div>
       <div class="word-pop hidden" id="wordPop" role="dialog" aria-label="单词释义">
@@ -1579,6 +1628,8 @@
         <button id="lightboxClose">关闭</button>
       </div>
     </dialog>
+
+    <div class="copy-toast" id="copyToast" role="status" aria-live="polite"></div>
 
     <button class="home-fab" id="homeFab" type="button" aria-label="返回首页">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11 12 3.8 20.5 11"/><path d="M5.6 9.4V20h12.8V9.4"/><path d="M9.7 20v-5.2h4.6V20"/></svg>
@@ -2820,6 +2871,8 @@
           count: function (n) { return n + " 条"; },
           fullChars: function (n) { return "全文 " + n + " 字"; },
           read: "读全文", listen: "听音频", listenArticle: "聆听文章", viewCard: "看卡片",
+          copyText: "复制全文", copied: "已复制",
+          copyDone: "已复制全文，去粘贴分享吧", copyFail: "复制失败，请再试一次",
           trLabel: "中文译文",
           thumbAlt: " 的推送卡片",
           emptyNote: "这条只留下了标题，没有正文。",
@@ -2870,6 +2923,8 @@
           count: function (n) { return n + (n === 1 ? " entry" : " entries"); },
           fullChars: function (n) { return "Full text · " + n + " characters"; },
           read: "Read", listen: "Listen", listenArticle: "Listen to Article", viewCard: "Card",
+          copyText: "Copy text", copied: "Copied",
+          copyDone: "Full text copied — paste it anywhere to share", copyFail: "Copy failed — please try again",
           trLabel: "中文译文",
           thumbAlt: " — card",
           emptyNote: "Only the title remains for this entry.",
@@ -3081,7 +3136,11 @@
           '<span class="tag">' + esc(S().themes[latest.theme]) + "</span></div>" +
           '<h2 class="hero-title">' + esc(dispTitle(titleFor(latest))) + "</h2>" +
           '<p class="hero-meta">' + esc(latest.date + " " + weekdayOf(latest.date) + " · " + m.time +
-          (latest.text ? " · " + S().fullChars((textFor(latest) || "").length) : "")) + "</p>";
+          (latest.text ? " · " + S().fullChars((textFor(latest) || "").length) : "")) + "</p>" +
+          (textFor(latest)
+            ? '<button type="button" class="btn copy-btn hero-copy">' + COPY_ICON +
+              '<span data-copy-label>' + esc(S().copyText) + "</span></button>"
+            : "");
         if (latest.cardImg) {
           card.innerHTML = '<img class="hero-cover" src="assets/' + esc(latest.cardImg) + '" alt="" decoding="async" onerror="this.style.display=\'none\'">' +
             '<div class="hero-shade">' + inner + "</div>";
@@ -3097,6 +3156,17 @@
         card.addEventListener("keydown", function (ev) {
           if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); }
         });
+        /* The cover card's copy key copies instead of opening: it
+           stops the tap (and its own key presses) from reaching the
+           card's open handler. */
+        var heroCopyBtn = card.querySelector(".hero-copy");
+        if (heroCopyBtn) {
+          heroCopyBtn.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            doCopy(latest, heroCopyBtn);
+          });
+          heroCopyBtn.addEventListener("keydown", function (ev) { ev.stopPropagation(); });
+        }
         heroEl.appendChild(card);
         wrapDigits(card.querySelector(".hero-meta"));
         wrapDigits(card.querySelector(".hero-title"));
@@ -3169,6 +3239,7 @@
           rbtn.textContent = S().read;
           rbtn.addEventListener("click", function () { openReader(e); });
           rfoot.appendChild(rbtn);
+          rfoot.appendChild(makeCopyButton(e));
           art.appendChild(rfoot);
           return art;
         }
@@ -3237,6 +3308,7 @@
           vb.addEventListener("click", function () { if (LANG !== "en") openLightbox(e); });
           foot.appendChild(vb);
         }
+        if (textFor(e)) foot.appendChild(makeCopyButton(e));
         if (foot.children.length) art.appendChild(foot);
         return art;
       }
@@ -3442,8 +3514,112 @@
         paintDua();
       }
 
+      /* ---------- one-tap plain-text copy ----------
+         Sharing a piece used to mean select-all, copy, then cleaning
+         the result by hand. Now every entry card, the cover card and
+         the reader toolbar carry one 复制全文 key that puts the
+         entry's plain text — its title, a blank line, then the full
+         body in the edition currently on screen — straight onto the
+         clipboard. The copied text is text only: every URL is
+         stripped out, and a line that held nothing but a link (a
+         视频：… line, say) is dropped with its label, so what gets
+         pasted into a chat is clean prose with no links in it. */
+      var COPY_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+      function stripUrls(s) {
+        return String(s)
+          .replace(/https?:\/\/[^\s<>"'）】」』]+/gi, "")
+          .replace(/\bwww\.[^\s<>"'）】」』]+/gi, "")
+          /* A bare domain carrying a path (hadeethenc.com/zh/browse/…)
+             is a link in everything but its scheme — out it goes.
+             A bare domain name alone (sunnah.com, quran.com) stays:
+             in the attribution lines it reads as a source's name,
+             not a link. Empty brackets a stripped link leaves
+             behind go with it. */
+          .replace(/[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.(?:com|org|net|io|edu|info|co)\/[^\s<>"'）】」』；;，,]+/gi, "")
+          .replace(/（\s*）/g, "")
+          .replace(/\(\s*\)/g, "");
+      }
+      function plainTextFor(e) {
+        var title = stripUrls(dispTitle(titleFor(e) || "")).trim();
+        var body = stripUrls(String(textFor(e) || "").replace(/\r\n?/g, "\n").replace(/<[^>]*>/g, ""));
+        var kept = [];
+        body.split("\n").forEach(function (ln) {
+          var t = ln.replace(/[ \t]+/g, " ").trim();
+          if (!t) { kept.push(""); return; }
+          /* A line left as only a link label once its URL is gone
+             （视频： / Yaqeen 页面： / Video: …) carries no text —
+             drop it rather than pasting a dangling label. */
+          if (/^(视频|视频链接|原文|原文链接|原论文|来源链接|链接|网址|页面|当天页面|30u30\s*当天页面|Yaqeen\s*页面|Yaqeen\s*episode\s*页面|Yaqeen\s*剧集页|Video|Link|URL|Source|Source link|Yaqeen page|Day page|30u30 day page|Original video|Original link|Original series|Original article|Original paper|Original post)\s*[：:]?\s*$/i.test(t)) return;
+          kept.push(t);
+        });
+        body = kept.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+        return title ? title + "\n\n" + body : body;
+      }
+      function copyPlainText(text, onDone, onFail) {
+        function fallback() {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          ta.setAttribute("readonly", "");
+          ta.style.cssText = "position:fixed;top:0;left:0;width:2px;height:2px;opacity:0;";
+          document.body.appendChild(ta);
+          ta.select();
+          try { ta.setSelectionRange(0, ta.value.length); } catch (err) {}
+          var ok = false;
+          try { ok = document.execCommand("copy"); } catch (err) {}
+          document.body.removeChild(ta);
+          if (ok) onDone(); else onFail();
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(onDone, fallback);
+        } else {
+          fallback();
+        }
+      }
+      var copyToastEl = document.getElementById("copyToast");
+      var copyToastTimer = null;
+      function showCopyToast(msg) {
+        /* While the reader (a modal dialog) is open, page-level
+           elements render under its top layer — move the one toast
+           inside whichever surface is currently on top. */
+        var host = (reader && reader.open) ? reader : document.body;
+        if (copyToastEl.parentNode !== host) host.appendChild(copyToastEl);
+        copyToastEl.textContent = msg;
+        copyToastEl.classList.add("on");
+        if (copyToastTimer) clearTimeout(copyToastTimer);
+        copyToastTimer = setTimeout(function () { copyToastEl.classList.remove("on"); }, 2200);
+      }
+      function flashCopied(btn) {
+        if (!btn) return;
+        var label = btn.querySelector("[data-copy-label]") || btn;
+        if (label.getAttribute("data-flashing")) return;
+        var orig = label.textContent;
+        label.setAttribute("data-flashing", "1");
+        label.textContent = S().copied;
+        setTimeout(function () {
+          label.textContent = orig;
+          label.removeAttribute("data-flashing");
+        }, 1600);
+      }
+      function doCopy(e, btn) {
+        copyPlainText(plainTextFor(e), function () {
+          flashCopied(btn);
+          showCopyToast(S().copyDone);
+        }, function () {
+          showCopyToast(S().copyFail);
+        });
+      }
+      function makeCopyButton(e, primary) {
+        var b = document.createElement("button");
+        b.className = "btn copy-btn" + (primary ? " primary" : "");
+        b.type = "button";
+        b.innerHTML = COPY_ICON + '<span data-copy-label>' + esc(S().copyText) + "</span>";
+        b.addEventListener("click", function () { doCopy(e, b); });
+        return b;
+      }
+
       /* ---------- reader ---------- */
       var reader = document.getElementById("reader");
+      var readerEntry = null;
       /* Closing a full page slides it back down (~0.35s) before the
          dialog actually closes; with reduced motion it closes at
          once. Every close path (✕, backdrop tap, Esc, the home key)
@@ -3466,6 +3642,7 @@
         setTimeout(finish, 450);
       }
       function openReader(e) {
+        readerEntry = e;
         document.getElementById("readerMeta").innerHTML =
           tagHtml(e) + '<span class="time">' + e.date + " " + weekdayOf(e.date) + "</span>";
         document.getElementById("readerTitle").textContent = dispTitle(titleFor(e));
@@ -3527,6 +3704,9 @@
         updateHomeFab();
         requestAnimationFrame(function () { body.scrollTop = 0; reader.scrollTop = 0; });
       }
+      document.getElementById("readerCopy").addEventListener("click", function () {
+        if (readerEntry) doCopy(readerEntry, this);
+      });
       document.getElementById("readerClose").addEventListener("click", function () { closePage(reader); });
       reader.addEventListener("click", function (ev) { if (ev.target === reader) closePage(reader); });
       reader.addEventListener("cancel", function (ev) { ev.preventDefault(); closePage(reader); });
@@ -4793,6 +4973,7 @@
         document.getElementById("reader").setAttribute("aria-label", s.readerLabel);
         document.getElementById("audioView").setAttribute("aria-label", s.audioViewLabel);
         document.getElementById("readerClose").setAttribute("aria-label", s.close);
+        document.getElementById("readerCopyLabel").textContent = s.copyText;
         document.getElementById("homeFab").setAttribute("aria-label", s.home);
         document.getElementById("audioViewClose").setAttribute("aria-label", s.close);
         document.getElementById("wordPop").setAttribute("aria-label", s.wordLabel);
