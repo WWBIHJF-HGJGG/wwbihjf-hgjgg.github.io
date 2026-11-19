@@ -3517,6 +3517,11 @@
            label in a pasted chat (in the English edition the card
            paragraph keeps its quote but loses the sentence that
            describes the card's photograph);
+         · a line that carried a link and is left as nothing but a
+           label once the link is stripped （原文： / 来源： / any
+           short label ending in a colon, whatever its wording) is
+           dropped with its label — the known-label list in the
+           loop is only a backstop, the rule itself is general;
          · the section label 「一篇文章」 is written as 「正文」;
          · an author / speaker byline （原作者：…, 作者：…, a
            "…论文，作者 …" line, the English "Today's article comes
@@ -3569,9 +3574,23 @@
         if ((rest.match(/\.\s+[A-Z]/g) || []).length > 1) return null;
         return rest.charAt(0).toUpperCase() + rest.slice(1);
       }
+      /* A line that held a link and, with the link stripped, is
+         nothing but a short label ending in a colon — 原文：,
+         来源：, Original link: and their kin, whatever wording
+         the label uses — is an empty label line: it only named
+         where the link pointed and says nothing else. Trailing
+         brackets or dashes a stripped link leaves behind
+         （原文：） and the like) do not save it. A line whose
+         colon is followed by real text (a source's name, a note)
+         is not label-only and stays, and a heading that never
+         carried a link is never judged by this rule at all. */
+      function isLinkLabelOnly(t) {
+        var m = t.match(/^([^：:]{1,24})[：:]\s*[）)】」』·•—–\-、,，;；.。]*$/);
+        return !!m && !/[。！？]/.test(m[1]);
+      }
       function plainTextFor(e) {
         var title = stripUrls(dispTitle(titleFor(e) || "")).trim();
-        var body = stripUrls(String(textFor(e) || "").replace(/\r\n?/g, "\n").replace(/<[^>]*>/g, ""));
+        var body = String(textFor(e) || "").replace(/\r\n?/g, "\n").replace(/<[^>]*>/g, "");
         /* Title matching ignores brackets, quotes and punctuation,
            so 《标题》 and a bare 标题 line both count as the title. */
         function normTitle(s) {
@@ -3582,12 +3601,24 @@
         var kept = [];
         var bylines = [];
         body.split("\n").forEach(function (ln) {
-          var t = ln.replace(/[ \t]+/g, " ").trim();
+          /* URLs are stripped line by line, not from the whole
+             body up front, so the loop still knows whether THIS
+             line carried a link — that is what tells an empty
+             link label （原文： with its URL gone) from a real
+             heading that merely ends in a colon. */
+          var hadLink = /https?:\/\/|\bwww\.|[A-Za-z0-9-]+\.[A-Za-z0-9-]*\.(?:com|org|net|io|edu|info|co)\//i.test(ln);
+          var t = stripUrls(ln).replace(/[ \t]+/g, " ").trim();
           if (!t) { kept.push(""); return; }
           /* A line left as only a link label once its URL is gone
-             （视频： / Yaqeen 页面： / Video: …) carries no text —
-             drop it rather than pasting a dangling label. */
-          if (/^(视频|视频链接|原文|原文链接|原论文|来源链接|链接|网址|页面|当天页面|30u30\s*当天页面|Yaqeen\s*页面|Yaqeen\s*episode\s*页面|Yaqeen\s*剧集页|Video|Link|URL|Source|Source link|Yaqeen page|Day page|30u30 day page|Original video|Original link|Original series|Original article|Original paper|Original post)\s*[：:]?\s*$/i.test(t)) return;
+             （原文： / 视频： / Yaqeen 页面： / Video: …) carries
+             no text — drop it rather than pasting a dangling
+             label. The general rule comes first: any short label
+             ending in a colon whose line carried a link is out,
+             whatever the label says; the known-label list after
+             it is a backstop for label lines whose link left no
+             trace the check above can see. */
+          if (hadLink && isLinkLabelOnly(t)) return;
+          if (/^(视频|视频链接|原文|原文链接|原文地址|原论文|来源|来源链接|出处|链接|链接地址|网址|地址|页面|系列|系列链接|当天页面|30u30\s*当天页面|Yaqeen\s*页面|Yaqeen\s*episode\s*页面|Yaqeen\s*剧集页|Video|Link|URL|Source|Source link|Yaqeen page|Day page|30u30 day page|Original|Original video|Original link|Original series|Original article|Original paper|Original post|Original text)\s*[：:]?\s*[）)】」』·•—–-]*\s*$/i.test(t)) return;
           /* A separator-only line is furniture, not text. */
           if (/^[-—–*·.]{3,}$/.test(t)) return;
           /* 「卡片引文：…」 states a citation and quotes nothing —
