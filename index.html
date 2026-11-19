@@ -3497,7 +3497,7 @@
         paintDua();
       }
 
-      /* ---------- one-tap plain-text copy ----------
+      /* ---------- one-tap plain-text copy （智能复制） ----------
          Sharing a piece used to mean select-all, copy, then cleaning
          the result by hand. Now every entry card and the reader
          toolbar carry one 复制全文 key that puts the
@@ -3506,7 +3506,25 @@
          clipboard. The copied text is text only: every URL is
          stripped out, and a line that held nothing but a link (a
          视频：… line, say) is dropped with its label, so what gets
-         pasted into a chat is clean prose with no links in it. */
+         pasted into a chat is clean prose with no links in it.
+         On top of that the copy is SMART about the shape of a piece
+         (the reader's standing rules — a rebuild keeps all of them):
+         · the title is written ONCE, at the top — a body line that
+           merely repeats it (the 《…》 line under the article
+           heading, an opening 「类型 · 标题」 line) is dropped;
+         · a 「卡片引文：《古兰经》… · 马坚译」 line is dropped: it
+           carries a citation and no quote, so it reads as a stray
+           label in a pasted chat (in the English edition the card
+           paragraph keeps its quote but loses the sentence that
+           describes the card's photograph);
+         · the section label 「一篇文章」 is written as 「正文」;
+         · an author / speaker byline （原作者：…, 作者：…, a
+           "…论文，作者 …" line, the English "Today's article comes
+           from … by …" line) never sits in the middle of the piece:
+           it is collected and written once, at the very end;
+         · a separator-only line (--- and its kin) is dropped.
+         The page itself is untouched — all of this shapes only what
+         lands on the clipboard. */
       var COPY_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
       function stripUrls(s) {
         return String(s)
@@ -3522,10 +3540,47 @@
           .replace(/（\s*）/g, "")
           .replace(/\(\s*\)/g, "");
       }
+      /* A byline names who wrote or speaks a piece and nothing
+         else: it opens with an attribution label （原作者： / 作者： /
+         主讲： / 译者： / Speaker: …), or it is the short
+         "…论文，作者 …" line that used to sit under the article
+         heading. Prose that merely mentions an author mid-sentence
+         (long, punctuated, or opening with ——) is never a byline. */
+      function isBylineLine(t) {
+        if (t.length > 120) return false;
+        if (/^(原作者|作者|主讲人?|讲者|演讲者|译者|翻译)\s*[：:]/.test(t)) return true;
+        if (/^(Speaker|Lecturer|Author)\s*[:：]/i.test(t)) return true;
+        if (t.length <= 90 && /[，,]\s*作者\s*\S/.test(t) && !/[。！？]/.test(t)) return true;
+        return false;
+      }
+      /* The English edition opens its article section with one
+         "Today's article comes from <source>: "Title", by <name>."
+         line — title and author both repeated mid-piece. When the
+         line is that attribution alone (short, ends with the
+         by-clause, no further prose), it becomes a closing byline
+         without the "Today's article comes from" lead-in. A line
+         that runs on into real prose is left exactly where it is. */
+      function englishByline(t) {
+        var m = t.match(/^Today['’]s (?:article|episode) comes from (.+)$/i);
+        if (!m) return null;
+        var rest = m[1].trim();
+        if (rest.length > 220) return null;
+        if (!/\bby\s+[A-Z]/.test(rest)) return null;
+        if ((rest.match(/\.\s+[A-Z]/g) || []).length > 1) return null;
+        return rest.charAt(0).toUpperCase() + rest.slice(1);
+      }
       function plainTextFor(e) {
         var title = stripUrls(dispTitle(titleFor(e) || "")).trim();
         var body = stripUrls(String(textFor(e) || "").replace(/\r\n?/g, "\n").replace(/<[^>]*>/g, ""));
+        /* Title matching ignores brackets, quotes and punctuation,
+           so 《标题》 and a bare 标题 line both count as the title. */
+        function normTitle(s) {
+          return String(s).replace(/[《》「」『』“”"'‘’\s·•:：,，。、;；!！?？()（）—–-]/g, "").toLowerCase();
+        }
+        var titleNorm = normTitle(title);
+        var typeNorm = normTitle(e.type || "");
         var kept = [];
+        var bylines = [];
         body.split("\n").forEach(function (ln) {
           var t = ln.replace(/[ \t]+/g, " ").trim();
           if (!t) { kept.push(""); return; }
@@ -3533,9 +3588,35 @@
              （视频： / Yaqeen 页面： / Video: …) carries no text —
              drop it rather than pasting a dangling label. */
           if (/^(视频|视频链接|原文|原文链接|原论文|来源链接|链接|网址|页面|当天页面|30u30\s*当天页面|Yaqeen\s*页面|Yaqeen\s*episode\s*页面|Yaqeen\s*剧集页|Video|Link|URL|Source|Source link|Yaqeen page|Day page|30u30 day page|Original video|Original link|Original series|Original article|Original paper|Original post)\s*[：:]?\s*$/i.test(t)) return;
+          /* A separator-only line is furniture, not text. */
+          if (/^[-—–*·.]{3,}$/.test(t)) return;
+          /* 「卡片引文：…」 states a citation and quotes nothing —
+             out. (Prose lines that open 卡片上的经文… are real text
+             and stay.) */
+          if (/^卡片引文\s*[：:]/.test(t)) return;
+          /* English card paragraph: the quote stays, the sentence
+             describing the card's photograph goes. */
+          if (/^The words on the card are\b/i.test(t)) {
+            t = t.replace(/\s*The photo on the card shows[\s\S]*$/i, "").trim();
+            if (!t) return;
+            kept.push(t);
+            return;
+          }
+          /* 「一篇文章」 as a section label is written 「正文」. */
+          if (/^一篇文章\s*[：:]?$/.test(t)) { kept.push("正文"); return; }
+          /* The title is written once, at the top of the copy: a
+             body line that only repeats it — 《标题》, or an opening
+             「类型 · 标题」 line — is dropped. */
+          var lnNorm = normTitle(t);
+          if (titleNorm && (lnNorm === titleNorm || (typeNorm && lnNorm === typeNorm + titleNorm))) return;
+          /* Bylines are collected and written at the very end. */
+          if (isBylineLine(t)) { bylines.push(t); return; }
+          var enBy = englishByline(t);
+          if (enBy) { bylines.push(enBy); return; }
           kept.push(t);
         });
         body = kept.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+        if (bylines.length) body = body ? body + "\n\n" + bylines.join("\n") : bylines.join("\n");
         return title ? title + "\n\n" + body : body;
       }
       function copyPlainText(text, onDone, onFail) {
