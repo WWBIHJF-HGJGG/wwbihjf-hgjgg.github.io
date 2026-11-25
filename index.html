@@ -1088,6 +1088,20 @@
       .full-text p { margin: 0 0 1em; overflow-wrap: anywhere; }
       .full-text a { color: var(--link); overflow-wrap: anywhere; }
       .full-text [dir="rtl"] { font-size: 1.12em; line-height: 2.1; }
+      /* Arabic trial lines: the transliteration sits tucked under its
+         Arabic line, right-aligned with it (the Arabic stands at the
+         RTL start), small and muted; the recitation player, where one
+         exists, keeps the same right edge and a phone-friendly width. */
+      .full-text .ar-tr {
+        font-size: 0.8em; line-height: 1.65; color: var(--muted);
+        text-align: right; margin: -0.5em 0 1.1em; overflow-wrap: anywhere;
+      }
+      .full-text .ar-listen { margin: -0.45em 0 1.25em; }
+      .full-text .ar-listen-label {
+        font-size: 12.5px; line-height: 1.55; color: var(--muted);
+        text-align: right; margin: 0 0 6px;
+      }
+      .full-text .ar-listen .player { max-width: 430px; margin-left: auto; }
 
       /* ---------- article reading comfort (essays & stories) ----------
          Long-form pieces read on the publishing serif at a relaxed
@@ -1993,6 +2007,57 @@
          essence blocks with a fine gold rule and their —— attribution
          set as a quiet sub-line, and a closing —— attribution stands
          apart. Everything else is a plain paragraph. */
+      /* ---------- Arabic recitation trial （阿语试播） ----------
+         Display layer only — the archive text is never touched. A few
+         quoted Arabic lines in the noon articles carry a Latin
+         transliteration directly under the line, so a reader can try
+         sounding it out; and where a verified human recitation exists
+         (Alafasy's whole-verse recording of 2:127 — never a machine
+         voice), a small player stands under the transliteration and is
+         decorated like every other player on the site. Lines with no
+         verified recording get the transliteration alone. Matching is
+         by the line's exact text, in either edition's renderer; the
+         one place a verse is quoted inside a Chinese translator's note
+         (Ep. 2 zh), the note paragraph is split at render time so the
+         Arabic stands on its own line, as site house style requires. */
+      var AR_NOTES = [
+        { ar: "وَإِذْ يَرْفَعُ إِبْرَٰهِـۧمُ ٱلْقَوَاعِدَ مِنَ ٱلْبَيْتِ وَإِسْمَـٰعِيلُ رَبَّنَا تَقَبَّلْ مِنَّآ ۖ إِنَّكَ أَنتَ ٱلسَّمِيعُ ٱلْعَلِيمُ", tr: "wa-idh yarfaʿu ib'rāhīmu l-qawāʿida mina l-bayti wa-is'māʿīlu rabbanā taqabbal minnā innaka anta l-samīʿu l-ʿalīmu", audio: "rabbana_002127.mp3",
+          label: "《古兰经》2:127 · 诵读：阿法西", labelEn: "The Qur'an 2:127 · Reciter: Alafasy" },
+        { ar: "لَا يَزِيدُ عَلَيْهَا", tr: "Lā yazīdu 'alayhā" },
+        { ar: "اللَّهُمَّ قِنِي شُحَّ نَفْسِي", tr: "Allāhumma qinī shuḥḥa nafsī" },
+        { ar: "إِنِّي إِذَا وُقِيتُ شُحَّ نَفْسِي لَمْ أَسْرِقْ وَلَمْ أَزْنِ وَلَمْ أَفْعَلْ", tr: "Innī idhā wuqītu shuḥḥa nafsī lam asriq wa-lam azni wa-lam af'al" }
+      ];
+      function arNoteFor(block) {
+        var t = block.trim();
+        for (var i = 0; i < AR_NOTES.length; i++) if (AR_NOTES[i].ar === t) return AR_NOTES[i];
+        return null;
+      }
+      function arEmbeddedIn(block) {
+        for (var i = 0; i < AR_NOTES.length; i++) {
+          var idx = block.indexOf(AR_NOTES[i].ar);
+          if (idx > 0) return { note: AR_NOTES[i], idx: idx };
+        }
+        return null;
+      }
+      function arNoteHtml(note) {
+        var h = '<p class="ar-tr" dir="ltr">' + esc(note.tr) + "</p>";
+        if (note.audio) {
+          h += '<div class="ar-listen"><p class="ar-listen-label">' +
+            esc(LANG === "en" ? note.labelEn : note.label) + "</p>" +
+            '<audio preload="metadata" src="assets/' + esc(note.audio) + '"></audio></div>';
+        }
+        return h;
+      }
+      function arEmbeddedHtml(block, emb, linkLine) {
+        var ar = emb.note.ar;
+        var before = block.slice(0, emb.idx).trim();
+        var after = block.slice(emb.idx + ar.length).trim();
+        var h = "";
+        if (before) h += "<p>" + before.split("\n").map(linkLine).join("<br>") + "</p>";
+        h += '<p dir="rtl" lang="ar">' + esc(ar) + "</p>" + arNoteHtml(emb.note);
+        if (after) h += "<p>" + after.split("\n").map(linkLine).join("<br>") + "</p>";
+        return h;
+      }
       function renderText(text) {
         function linkLine(ln) {
           return esc(ln).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
@@ -2020,7 +2085,15 @@
             return '<p class="ft-sign">' + joined + "</p>";
           }
           var rtl = hasArabic(block) && !/[\u4e00-\u9fff]/.test(block);
-          return '<p' + (rtl ? ' dir="rtl" lang="ar"' : "") + ">" + joined + "</p>";
+          var para = '<p' + (rtl ? ' dir="rtl" lang="ar"' : "") + ">" + joined + "</p>";
+          if (rtl) {
+            var arN = arNoteFor(block);
+            if (arN) return para + arNoteHtml(arN);
+          } else if (hasArabic(block)) {
+            var arE = arEmbeddedIn(block);
+            if (arE) return arEmbeddedHtml(block, arE, linkLine);
+          }
+          return para;
         }).join("");
       }
 
@@ -2096,6 +2169,7 @@
             } else {
               var rtl = hasArabic(block) && !/[A-Za-z\u00C0-\u024F\u1E00-\u1EFF]/.test(block);
               out = "<p" + (rtl ? ' dir="rtl" lang="ar"' : "") + ">" + joined + "</p>";
+              if (rtl) { var arN2 = arNoteFor(block); if (arN2) out += arNoteHtml(arN2); }
             }
           }
           /* When the entry's Chinese text aligns paragraph-for-paragraph
